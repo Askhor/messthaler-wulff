@@ -38,15 +38,15 @@ class ExplorativeSimulation:
         if the_hash in self.visited:
             return
         self.visited.add(the_hash)
+        yield self.omni_simulation
 
-        options = self.omni_simulation.next_atoms(OmniSimulation.FORWARDS)
+        if continue_predicate(self.omni_simulation):
+            options = self.omni_simulation.next_atoms(OmniSimulation.FORWARDS)
 
-        for atom in options:
-            self.add_atom(atom)
-            yield self.omni_simulation
-            if continue_predicate(self.omni_simulation):
+            for atom in options:
+                self.add_atom(atom)
                 yield from self.recursive_explore(continue_predicate)
-            self.remove_atom(atom)
+                self.remove_atom(atom)
 
     def n_crystals(self, n: int):
         log.debug("Calculating n-Crystals")

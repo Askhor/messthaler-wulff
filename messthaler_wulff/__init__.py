@@ -80,6 +80,7 @@ def main():
                                       lattice=parse_lattice(args.lattice), windows_mode=args.windows)
         case 'explore':
             from . import mode_explore
-            mode_explore.run_mode()
+            mode_explore.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice),
+                                  dimension=int(args.dimension))
         case _:
             log.error(f"Unknown mode {args.MODE}. Must be one of 'view' or 'simulate'")

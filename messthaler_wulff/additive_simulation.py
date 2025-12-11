@@ -215,7 +215,12 @@ class OmniSimulation:
 
     def force_set_atom(self, atom, mode=FORWARDS):
         self.adjust_atom_count(mode)
-        energy = self.calculate_energy(atom, mode)
+
+        atom2energy = self.boundaries[mode].atom2energy
+        if atom in atom2energy:
+            energy = atom2energy[atom]
+        else:
+            energy = self.calculate_energy(atom, mode)
         self.set_atom(atom, energy, mode)
 
     def visualise_slice(self, atomiser=lambda x, y: (0, x, y), crosshair=False, view_energies=False, color=True):

@@ -128,3 +128,15 @@ class BasicProfiler:
             self.sums.append(0)
         self.sums[self.index] += now - self.last_stop_time
         self.index += 1
+
+
+def debounce(function, interval=1):
+    last_call = [time.time()]
+
+    def impl(*args, **kwargs):
+        t = time.time()
+        if t >= last_call[0] + interval:
+            last_call[0] = t
+            function(*args, **kwargs)
+
+    return impl

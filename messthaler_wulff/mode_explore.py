@@ -1,20 +1,32 @@
 import logging
 
-import numpy as np
+from prettytable import PrettyTable
 
-from messthaler_wulff.additive_simulation import OmniSimulation, SimpleNeighborhood
-from messthaler_wulff.explorative_simulation import ExplorativeSimulation
+from messthaler_wulff.additive_simulation import OmniSimulation, SimpleNeighborhood, wipe_screen
+from messthaler_wulff.explorative_simulation import crystal_data
+from messthaler_wulff.progress import debounce
 
 log = logging.getLogger("messthaler_wulff")
 
 
-def run_mode():
-    omni_simulation = OmniSimulation(SimpleNeighborhood(np.identity(2)), None, (0, 0, 0))
-    explorative_simulation = ExplorativeSimulation(omni_simulation)
+def show_results(energies, counts, intermediate_value=False):
+    if intermediate_value:
+        wipe_screen()
+        print("Intermediate results:")
+    else:
+        print("Final results:")
 
-    log.debug("Now exploring")
+    table = PrettyTable(["nr atoms", "nr crystals", "min energy"], align='r')
 
-    for state in explorative_simulation.n_crystals(2):
-        state.visualise_slice()
+    for i in counts.keys():
+        table.add_row([i, counts[i], energies[i]])
 
-    log.debug("Finished exploring")
+    print(table)
+
+
+def run_mode(goal, lattice, dimension):
+    omni_simulation = OmniSimulation(SimpleNeighborhood(lattice), None, tuple([0] * (dimension + 1)))
+
+    energies, counts = crystal_data(omni_simulation, goal, debounce(lambda e,c: show_results(e,c, True)))
+
+    show_results(energies, counts)

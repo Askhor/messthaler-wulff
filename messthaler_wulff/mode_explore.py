@@ -17,6 +17,7 @@ def show_results(energies, counts, intermediate_value=False):
         print("Final results:")
 
     table = PrettyTable(["nr atoms", "nr crystals", "min energy"], align='r')
+    table.custom_format = lambda f, v: f"{v:,}"
 
     for i in counts.keys():
         table.add_row([i, counts[i], energies[i]])
@@ -27,6 +28,6 @@ def show_results(energies, counts, intermediate_value=False):
 def run_mode(goal, lattice, dimension):
     omni_simulation = OmniSimulation(SimpleNeighborhood(lattice), None, tuple([0] * (dimension + 1)))
 
-    energies, counts = crystal_data(omni_simulation, goal, debounce(lambda e,c: show_results(e,c, True)))
+    energies, counts = crystal_data(omni_simulation, goal, debounce(lambda e, c: show_results(e, c, True)))
 
     show_results(energies, counts)

@@ -6,7 +6,6 @@ from collections import defaultdict
 from sortedcontainers import SortedSet
 
 from .additive_simulation import OmniSimulation
-from .progress import ProgressBar
 
 log = logging.getLogger("messthaler_wulff")
 
@@ -58,7 +57,6 @@ class ExplorativeSimulation:
 
 
 def crystal_data(simulation: OmniSimulation, max_n: int, callback):
-
     explorer = ExplorativeSimulation(simulation)
     min_energies = defaultdict(lambda: math.inf)
     crystal_counts = defaultdict(lambda: 0)

@@ -1,1 +1,1 @@
-program_version = "2025.12.4"
+program_version = "2025.12.5"

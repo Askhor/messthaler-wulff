@@ -42,6 +42,24 @@ def parse_lattice(lattice):
     return transform
 
 
+def parse_initial_crystal(initial_crystal, dimension):
+    if initial_crystal is None:
+        return []
+
+    value = eval(initial_crystal)
+    log.info(f"Initial crystal has been set to {value}")
+
+    for i in range(len(value)):
+        l = len(value[i])
+        if l != dimension + 1:
+            value[i] = tuple([0] * (dimension + 1 - l) + list(value[i]))
+
+    log.info(f"Value has been normalised to {value}")
+    input("Press enter to continue...")
+
+    return value
+
+
 def main():
     parser = argparse.ArgumentParser(prog=PROGRAM_NAME,
                                      description="Wudduwudduwudduwudduwudduwudduwudduwuddu",
@@ -57,6 +75,7 @@ def main():
     parser.add_argument("--axis", action="store_true")
     parser.add_argument("--orthogonal", action="store_true")
     parser.add_argument("-w", "--windows", action="store_true")
+    parser.add_argument("--initial-crystal", default=None)
 
     args = parser.parse_args()
 
@@ -76,8 +95,10 @@ def main():
             mode_simulate.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice))
         case 'interactive':
             from . import mode_interactive
-            mode_interactive.run_mode(goal=int(args.goal), dimension=int(args.dimension),
-                                      lattice=parse_lattice(args.lattice), windows_mode=args.windows)
+            dimension = int(args.dimension)
+            mode_interactive.run_mode(goal=int(args.goal), dimension=dimension,
+                                      lattice=parse_lattice(args.lattice), windows_mode=args.windows,
+                                      initial=parse_initial_crystal(args.initial_crystal, dimension))
         case 'explore':
             from . import mode_explore
             mode_explore.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice),

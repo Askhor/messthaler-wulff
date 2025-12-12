@@ -110,6 +110,6 @@ def main():
         case 'minimisers':
             from . import mode_minimisers
             mode_minimisers.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice),
-                                     dimension=int(args.dimension))
+                                     dimension=int(args.dimension), dump_crystals=args.dump_crystals)
         case _:
             log.error(f"Unknown mode {args.MODE}. Must be one of {MODE_STRING}")

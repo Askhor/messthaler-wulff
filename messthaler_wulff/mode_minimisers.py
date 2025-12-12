@@ -24,9 +24,13 @@ def show_results(energies, counts, intermediate_value=False):
     print(table)
 
 
-def run_mode(goal, lattice, dimension):
+def run_mode(goal, lattice, dimension, dump_crystals):
     omni_simulation = OmniSimulation(SimpleNeighborhood(lattice), None, tuple([0] * (dimension + 1)))
     sim = MinimiserSimulation(omni_simulation)
 
-    for n in range(goal):
-        print(f"{n:3}: {sim.data(n)}")
+    if dump_crystals:
+        for m in sim.minimisers(goal):
+            print(m.sim.omni_simulation)
+    else:
+        for n in range(goal + 1):
+            print(f"{n:3}: {sim.data(n)}")

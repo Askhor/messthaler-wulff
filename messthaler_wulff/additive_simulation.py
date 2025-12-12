@@ -325,6 +325,9 @@ class OmniSimulation:
                     case "backwards":
                         print(self.boundaries[self.BACKWARDS])
                         input("Press Enter to continue")
+                    case "serialise":
+                        print(self)
+                        input("Press Enter to continue")
                     case "crosshair":
                         crosshair = not crosshair
                     case "fill":
@@ -337,9 +340,12 @@ add         - Adds the next atom in the sequence
 rm          - Removes the next atom in the reverse sequence
 up          - Goes up one z-layer (if possible)
 down        - Goes down one z-layer (if possible)
+layer       - Takes one parameter and sets the z-level to that value
 energy      - Toggle the energy view mode
 forwards    - Display the forwards boundary energy tracker
 backwards   - Display the backwards boundary energy tracker
+serialise   - Serialises the current crystal into a python list usable
+              in --initial-crystal
 crosshair   - Enable a crosshair
 fill        - Adds atoms to the crystal until the energy would increase
 exit        - Exit interactive mode

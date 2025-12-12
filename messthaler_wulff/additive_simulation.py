@@ -298,7 +298,7 @@ class OmniSimulation:
             while True:
                 wipe_screen()
                 self.visualise_slice(atomiser, crosshair=crosshair, view_energies=view_energies, color=color)
-                print(f"Total energy: {self.energy}; Z-Layer: {z}")
+                print(f"Number of atoms: {self.atoms}; Total energy: {self.energy}; Z-Layer: {z}")
 
                 try:
                     cmd, *args = input("Input Command: (add, rm, up, down, exit, ?) ").split()

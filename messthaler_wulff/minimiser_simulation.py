@@ -37,8 +37,8 @@ class MinimiserSimulation:
         return Data(count, min_energy)
 
     def data(self, n) -> Data:
-        for i in range(len(self.data_cache), n + 1):
-            self.data_cache.append(self.calc_data(n))
+        while len(self.data_cache) < n + 1:
+            self.data_cache.append(self.calc_data(len(self.data_cache)))
 
         return self.data_cache[n]
 

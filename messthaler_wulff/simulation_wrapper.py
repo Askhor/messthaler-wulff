@@ -11,7 +11,13 @@ class SimulationInfo:
     omni_simulation: OmniSimulation
     atoms: SortedSet
     atom_stack: list
-    visited: set
+
+    @classmethod
+    def from_omni(cls, omni_simulation: OmniSimulation):
+        if omni_simulation.atoms != 0:
+            raise ValueError()
+
+        return SimulationInfo(omni_simulation, SortedSet(), [])
 
     def add_atom(self, atom):
         self.omni_simulation.force_set_atom(atom, OmniSimulation.FORWARDS)
@@ -28,9 +34,9 @@ class SimulationState:
     def __init__(self, sim: SimulationInfo):
         self.sim = sim
 
-        self.atoms = omni_simulation.atoms
-        self.energy = omni_simulation.energy
-        self.hash = self.calc_hash()
+        self.atoms = sim.omni_simulation.atoms
+        self.energy = sim.omni_simulation.energy
+        self._hash = None
 
     def calc_hash(self):
         the_hash = hashlib.sha256()
@@ -40,11 +46,12 @@ class SimulationState:
 
         return the_hash.hexdigest()
 
-    def visited(self) -> bool:
-        return self.hash in self.sim.visited
-    
-    def visit(self):
-        self.sim.visited.add(self.hash)
+    def hash(self):
+        if self._hash is None:
+            self.goto()
+            self._hash = self.calc_hash()
+
+        return self._hash
 
     def goto(self):
         omni = self.sim.omni_simulation
@@ -54,7 +61,7 @@ class SimulationState:
 
     def next_atoms(self):
         self.goto()
-        return self.omni_simulation.next_atoms(OmniSimulation.FORWARDS)
+        return self.sim.omni_simulation.next_atoms(OmniSimulation.FORWARDS)
 
     def add_atom(self, atom):
         self.goto()

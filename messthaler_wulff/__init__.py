@@ -61,6 +61,9 @@ def parse_initial_crystal(initial_crystal, dimension):
 
 
 def main():
+    MODES = "view", "simulate", "interactive", "explore", "minimisers"
+    MODE_STRING = " or ".join("'" + m + "'" for m in MODES)
+
     parser = argparse.ArgumentParser(prog=PROGRAM_NAME,
                                      description="Wudduwudduwudduwudduwudduwudduwudduwuddu",
                                      allow_abbrev=True, add_help=True, exit_on_error=True)
@@ -68,7 +71,7 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', help="Show more output")
     parser.add_argument("--version", action="store_true", help="Show the current version of the program")
     parser.add_argument("MODE",
-                        help="What subprogram to execute; Can be 'view' or 'simulate' or 'interactive' or 'explore'")
+                        help=f"What subprogram to execute; Can be {MODE_STRING}")
     parser.add_argument("--goal", help="The number of atoms to add initially", default="100")
     parser.add_argument("--dimension", default="3")
     parser.add_argument("--lattice", default="fcc")
@@ -103,5 +106,9 @@ def main():
             from . import mode_explore
             mode_explore.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice),
                                   dimension=int(args.dimension))
+        case 'minimisers':
+            from . import mode_minimisers
+            mode_minimisers.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice),
+                                     dimension=int(args.dimension))
         case _:
-            log.error(f"Unknown mode {args.MODE}. Must be one of 'view' or 'simulate'")
+            log.error(f"Unknown mode {args.MODE}. Must be one of {MODE_STRING}")

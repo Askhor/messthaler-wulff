@@ -77,6 +77,7 @@ def main():
     parser.add_argument("--lattice", default="fcc")
     parser.add_argument("--axis", action="store_true")
     parser.add_argument("--orthogonal", action="store_true")
+    parser.add_argument("--dump-crystals", action="store_true")
     parser.add_argument("-w", "--windows", action="store_true")
     parser.add_argument("--initial-crystal", default=None)
 
@@ -105,7 +106,7 @@ def main():
         case 'explore':
             from . import mode_explore
             mode_explore.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice),
-                                  dimension=int(args.dimension))
+                                  dimension=int(args.dimension), dump_crystals=args.dump_crystals)
         case 'minimisers':
             from . import mode_minimisers
             mode_minimisers.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice),

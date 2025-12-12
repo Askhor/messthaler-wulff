@@ -3,9 +3,7 @@ import logging
 from prettytable import PrettyTable
 
 from messthaler_wulff.additive_simulation import OmniSimulation, SimpleNeighborhood, wipe_screen
-from messthaler_wulff.explorative_simulation import crystal_data
 from messthaler_wulff.minimiser_simulation import MinimiserSimulation
-from messthaler_wulff.progress import debounce
 
 log = logging.getLogger("messthaler_wulff")
 
@@ -32,4 +30,3 @@ def run_mode(goal, lattice, dimension):
 
     for n in range(goal):
         print(f"{n:3}: {sim.data(n)}")
-

@@ -33,6 +33,6 @@ def run_mode(goal, lattice, dimension, dump_crystals):
         sim = ExplorativeSimulation(omni_simulation)
         for state in sim.n_crystals(goal):
             if state.energy == energies[goal]:
-                print(*state.points(), sep=", ")
+                print(state)
     else:
         show_results(energies, counts)

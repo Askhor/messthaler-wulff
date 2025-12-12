@@ -368,6 +368,9 @@ Press Enter to continue execution
                           energy,
                           self.FORWARDS)
 
+    def __str__(self):
+        return "[" + ", ".join(map(str, sorted(self.points()))) + "]"
+
 
 def wipe_screen():
     print(f"\x1b[3J\x1b[H\x1b[J", end="")

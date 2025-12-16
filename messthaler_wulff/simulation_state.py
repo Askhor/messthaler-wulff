@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import math
 from abc import ABC, abstractmethod
 
 from sortedcontainers import SortedSet
@@ -41,6 +42,31 @@ class SimpleCrystalHasher(CrystalHasher):
 
         return the_hash.hexdigest()
 
+class TICrystalHasher(CrystalHasher):
+    def __init__(self, dimension):
+        self.atoms = SortedSet()
+        self.dimension = dimension
+
+    def add_atom(self, atom):
+        self.atoms.add(atom)
+
+    def remove_atom(self, atom):
+        self.atoms.discard(atom)
+
+    def hash(self):
+        minima = [math.inf] * (self.dimension + 1)
+
+        for atom in self.atoms:
+            for i in range(self.dimension + 1):
+                minima[i] = min(minima[i], atom[i])
+
+        the_hash = hashlib.sha256()
+
+        for atom in self.atoms:
+            for i in range(self.dimension + 1):
+                the_hash.update(str(atom[i] - minima[i]).encode('utf-8'))
+
+        return the_hash.hexdigest()
 
 class SimulationState:
     def __init__(self, sim, parent, new_atom):

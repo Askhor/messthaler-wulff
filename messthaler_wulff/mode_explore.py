@@ -2,24 +2,18 @@ import logging
 
 from prettytable import PrettyTable
 
-from messthaler_wulff.additive_simulation import OmniSimulation, SimpleNeighborhood, wipe_screen
-from messthaler_wulff.explorative_simulation import crystal_data, ExplorativeSimulation
-from messthaler_wulff.progress import debounce
+from messthaler_wulff.additive_simulation import OmniSimulation, SimpleNeighborhood
+from messthaler_wulff.explorative_simulation import ExplorativeSimulation
+from messthaler_wulff.simulation_state import SimpleCrystalHasher
 
 log = logging.getLogger("messthaler_wulff")
 
 
-def show_results(energies, counts, intermediate_value=False):
-    if intermediate_value:
-        wipe_screen()
-        print("Intermediate results:")
-    else:
-        print("Final results:")
-
+def show_results(energies, counts):
     table = PrettyTable(["nr atoms", "nr crystals", "min energy"], align='r')
     table.custom_format = lambda f, v: f"{v:,}"
 
-    for i in counts.keys():
+    for i in range(len(counts)):
         table.add_row([i, counts[i], energies[i]])
 
     print(table)
@@ -27,12 +21,19 @@ def show_results(energies, counts, intermediate_value=False):
 
 def run_mode(goal, lattice, dimension, dump_crystals):
     omni_simulation = OmniSimulation(SimpleNeighborhood(lattice), None, tuple([0] * (dimension + 1)))
-    energies, counts = crystal_data(omni_simulation, goal, debounce(lambda e, c: show_results(e, c, True)))
+    explorer = ExplorativeSimulation(omni_simulation, SimpleCrystalHasher())
+
+    for n in range(goal + 1):
+        log.debug(f"{n:3}: {explorer.min_energy(n):4} {explorer.crystal_count(n):10}")
+
+    for i, v in enumerate([0, 12, 22, 30, 36, 44, 50, 54, 60, 66, 70, 76, 80, 84, 88, 92]):
+        assert explorer.min_energy(i) == v
+        log.debug(f"Test {i} passed")
 
     if dump_crystals:
-        sim = ExplorativeSimulation(omni_simulation)
-        for state in sim.n_crystals(goal):
-            if state.energy == energies[goal]:
-                print(state)
+        for state in explorer.crystals(goal):
+            if state.energy == explorer.min_energy(goal):
+                print(state.as_list())
     else:
-        show_results(energies, counts)
+        show_results([explorer.min_energy(n) for n in range(goal + 1)],
+                     [explorer.crystal_count(n) for n in range(goal + 1)])

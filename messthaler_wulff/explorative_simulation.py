@@ -1,72 +1,57 @@
-import hashlib
 import logging
 import math
-from collections import defaultdict
-
-from sortedcontainers import SortedSet
+from dataclasses import dataclass
 
 from .additive_simulation import OmniSimulation
+from .simulation_state import CrystalHasher, AdvancedSimulation
 
 log = logging.getLogger("messthaler_wulff")
 
 
+@dataclass(frozen=True)
+class Data:
+    crystals: tuple
+    min_energy: int
+    count: int
+
+
 class ExplorativeSimulation:
-    def __init__(self, omni_simulation: OmniSimulation):
-        self.omni_simulation = omni_simulation
-        self.atoms = SortedSet()
-        self.visited = set()
+    def __init__(self, omni: OmniSimulation, hasher: CrystalHasher):
+        self.sim = AdvancedSimulation(omni, hasher)
 
-    def add_atom(self, atom):
-        self.omni_simulation.force_set_atom(atom, OmniSimulation.FORWARDS)
-        self.atoms.add(atom)
+        self.cache = [Data((self.sim.initial_state,), 0, 1)]
 
-    def remove_atom(self, atom):
-        self.omni_simulation.force_set_atom(atom, OmniSimulation.BACKWARDS)
-        self.atoms.discard(atom)
+    def calculate_data(self, n: int) -> Data:
+        sim = self.sim
+        visited = set()
+        crystals = []
+        min_energy = math.inf
+        count = 0
 
-    def compute_hash(self):
-        the_hash = hashlib.sha256()
+        for state in self.crystals(n - 1):
+            for atom in state.next_atoms:
+                new_state = state.add_atom(atom)
+                if new_state.hash in visited:
+                    continue
 
-        for atom in self.atoms:
-            the_hash.update(str(atom).encode('utf-8'))
+                visited.add(new_state.hash)
+                min_energy = min(min_energy, new_state.energy)
+                count += 1
+                crystals.append(new_state)
 
-        return the_hash.hexdigest()
+        return Data(tuple(crystals), min_energy, count)
 
-    def recursive_explore(self, continue_predicate):
-        the_hash = self.compute_hash()
+    def get_data(self, n: int):
+        while len(self.cache) < n + 1:
+            self.cache.append(self.calculate_data(len(self.cache)))
 
-        if the_hash in self.visited:
-            return
-        self.visited.add(the_hash)
-        yield self.omni_simulation
+        return self.cache[n]
 
-        if continue_predicate(self.omni_simulation):
-            options = self.omni_simulation.next_atoms(OmniSimulation.FORWARDS)
+    def crystals(self, n: int):
+        return self.get_data(n).crystals
 
-            for atom in options:
-                self.add_atom(atom)
-                yield from self.recursive_explore(continue_predicate)
-                self.remove_atom(atom)
+    def min_energy(self, n: int):
+        return self.get_data(n).min_energy
 
-    def n_crystals(self, n: int):
-        log.debug("Calculating n-Crystals")
-
-        for state in self.recursive_explore(lambda sim: sim.atoms < n):
-            if state.atoms == n:
-                yield state
-
-
-def crystal_data(simulation: OmniSimulation, max_n: int, callback):
-    explorer = ExplorativeSimulation(simulation)
-    min_energies = defaultdict(lambda: math.inf)
-    crystal_counts = defaultdict(lambda: 0)
-
-    for i, state in enumerate(explorer.recursive_explore(lambda sim: sim.atoms < max_n)):
-        callback(min_energies, crystal_counts)
-
-        crystal_counts[state.atoms] += 1
-
-        if state.energy < min_energies[state.atoms]:
-            min_energies[state.atoms] = state.energy
-
-    return min_energies, crystal_counts
+    def crystal_count(self, n: int):
+        return self.get_data(n).count

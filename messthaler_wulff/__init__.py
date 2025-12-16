@@ -90,16 +90,19 @@ def main():
         log.info(f"{PROGRAM_NAME} version {program_version}")
         return
 
+    dimension = int(args.dimension)
+
     match args.MODE.lower():
         case 'view':
             from . import mode_view
-            mode_view.run_mode(use_orthogonal_projections=args.orthogonal, show_axes=args.axis)
+            mode_view.run_mode(use_orthogonal_projections=args.orthogonal, show_axes=args.axis,
+                               initial=parse_initial_crystal(args.initial_crystal, dimension),
+                               lattice=parse_lattice(args.lattice))
         case 'simulate':
             from . import mode_simulate
             mode_simulate.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice))
         case 'interactive':
             from . import mode_interactive
-            dimension = int(args.dimension)
             mode_interactive.run_mode(goal=int(args.goal), dimension=dimension,
                                       lattice=parse_lattice(args.lattice), windows_mode=args.windows,
                                       initial=parse_initial_crystal(args.initial_crystal, dimension))

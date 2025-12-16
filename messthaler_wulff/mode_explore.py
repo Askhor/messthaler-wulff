@@ -26,10 +26,6 @@ def run_mode(goal, lattice, dimension, dump_crystals):
     for n in range(goal + 1):
         log.debug(f"{n:3}: {explorer.min_energy(n):4} {explorer.crystal_count(n):10}")
 
-    for i, v in enumerate([0, 12, 22, 30, 36, 44, 50, 54, 60, 66, 70, 76, 80, 84, 88, 92]):
-        assert explorer.min_energy(i) == v
-        log.debug(f"Test {i} passed")
-
     if dump_crystals:
         for state in explorer.crystals(goal):
             if state.energy == explorer.min_energy(goal):

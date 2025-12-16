@@ -1,7 +1,10 @@
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 
 import messthaler_wulff.objects as objects
+from messthaler_wulff.objects import ObjectCollection
+from messthaler_wulff.utils import convex_hull
 
 
 ################################################################################
@@ -30,6 +33,12 @@ def show_matplotlib():
 ################################################################################
 # Config done
 
-def run_mode(use_orthogonal_projections=False, show_axes=True):
+def run_mode(initial, lattice, use_orthogonal_projections=False, show_axes=True):
     setup_matplotlib(use_orthogonal_projections=use_orthogonal_projections, show_axes=show_axes)
+
+    points = [p[-3:] for p in initial]
+    points = [np.dot(lattice, p) for p in points]
+    points = ObjectCollection.from_points(*np.transpose(points))
+    convex_hull(points).plot()
+
     show_matplotlib()

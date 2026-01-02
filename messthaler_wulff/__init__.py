@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import logging
 import math
 
@@ -80,6 +81,7 @@ def main():
     parser.add_argument("--dump-crystals", action="store_true")
     parser.add_argument("-w", "--windows", action="store_true")
     parser.add_argument("--initial-crystal", default=None)
+    parser.add_argument("--hash-function", default="sha256")
 
     args = parser.parse_args()
 
@@ -89,6 +91,12 @@ def main():
     if args.version:
         log.info(f"{PROGRAM_NAME} version {program_version}")
         return
+
+    if args.hash_function not in hashlib.algorithms_available:
+        log.error(f"Unknown hash algorithm {args.hash_function}")
+        log.error(f"The following hash algorithms are available: {", ".join(hashlib.algorithms_available)}")
+
+    hash_function = lambda: hashlib.new(args.hash_function)
 
     dimension = int(args.dimension)
 
@@ -109,10 +117,12 @@ def main():
         case 'explore':
             from . import mode_explore
             mode_explore.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice),
-                                  dimension=int(args.dimension), dump_crystals=args.dump_crystals)
+                                  dimension=int(args.dimension), dump_crystals=args.dump_crystals,
+                                  hash_function=hash_function)
         case 'minimisers':
             from . import mode_minimisers
             mode_minimisers.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice),
-                                     dimension=int(args.dimension), dump_crystals=args.dump_crystals)
+                                     dimension=int(args.dimension), dump_crystals=args.dump_crystals,
+                                     hash_function=hash_function)
         case _:
             log.error(f"Unknown mode {args.MODE}. Must be one of {MODE_STRING}")

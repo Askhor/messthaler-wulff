@@ -4,7 +4,7 @@ from prettytable import PrettyTable
 
 from messthaler_wulff.additive_simulation import OmniSimulation, SimpleNeighborhood
 from messthaler_wulff.explorative_simulation import ExplorativeSimulation
-from messthaler_wulff.simulation_state import SimpleCrystalHasher, TICrystalHasher
+from messthaler_wulff.simulation_state import TICrystalHasher
 
 log = logging.getLogger("messthaler_wulff")
 
@@ -19,9 +19,9 @@ def show_results(energies, counts):
     print(table)
 
 
-def run_mode(goal, lattice, dimension, dump_crystals):
+def run_mode(goal, lattice, dimension, dump_crystals, hash_function):
     omni_simulation = OmniSimulation(SimpleNeighborhood(lattice), None, tuple([0] * (dimension + 1)))
-    explorer = ExplorativeSimulation(omni_simulation, TICrystalHasher(dimension))
+    explorer = ExplorativeSimulation(omni_simulation, TICrystalHasher(dimension, hash_function))
 
     for n in range(goal + 1):
         log.debug(f"{n:3}: {explorer.min_energy(n):4} {explorer.crystal_count(n):10}")

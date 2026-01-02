@@ -25,8 +25,9 @@ class CrystalHasher(ABC):
 
 
 class SimpleCrystalHasher(CrystalHasher):
-    def __init__(self):
+    def __init__(self, hash_function):
         self.atoms = SortedSet()
+        self.hash_function = hash_function
 
     def add_atom(self, atom):
         self.atoms.add(atom)
@@ -35,7 +36,7 @@ class SimpleCrystalHasher(CrystalHasher):
         self.atoms.discard(atom)
 
     def hash(self):
-        the_hash = hashlib.sha256()
+        the_hash = self.hash_function()
 
         for atom in self.atoms:
             the_hash.update(str(atom).encode('utf-8'))
@@ -43,9 +44,10 @@ class SimpleCrystalHasher(CrystalHasher):
         return the_hash.hexdigest()
 
 class TICrystalHasher(CrystalHasher):
-    def __init__(self, dimension):
+    def __init__(self, dimension, hash_function):
         self.atoms = SortedSet()
         self.dimension = dimension
+        self.hash_function = hash_function
 
     def add_atom(self, atom):
         self.atoms.add(atom)
@@ -60,7 +62,7 @@ class TICrystalHasher(CrystalHasher):
             for i in range(self.dimension + 1):
                 minima[i] = min(minima[i], atom[i])
 
-        the_hash = hashlib.sha256()
+        the_hash = self.hash_function()
 
         for atom in self.atoms:
             for i in range(self.dimension + 1):

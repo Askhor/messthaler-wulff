@@ -22,7 +22,6 @@ class ExplorativeSimulation:
         self.cache = [Data((self.sim.initial_state,), 0, 1)]
 
     def calculate_data(self, n: int) -> Data:
-        sim = self.sim
         visited = set()
         crystals = []
         min_energy = math.inf

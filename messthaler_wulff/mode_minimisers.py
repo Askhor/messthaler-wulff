@@ -19,16 +19,16 @@ def show_results(energies, counts):
     print(table)
 
 
-def run_mode(goal, lattice, dimension, dump_crystals):
+def run_mode(goal, lattice, dimension, dump_crystals, hash_function):
     omni_simulation = OmniSimulation(SimpleNeighborhood(lattice), None, tuple([0] * (dimension + 1)))
-    sim = MinimiserSimulation(omni_simulation, TICrystalHasher(dimension))
+    sim = MinimiserSimulation(omni_simulation, TICrystalHasher(dimension, hash_function))
 
     for n in range(goal + 1):
         log.debug(f"{n:3}: {sim.min_energy(n):4} {sim.minimiser_count(n):10}")
 
     if dump_crystals:
         for state in sim.minimisers(goal):
-                print(state.as_list())
+            print(state.as_list())
     else:
         show_results([sim.min_energy(n) for n in range(goal + 1)],
                      [sim.minimiser_count(n) for n in range(goal + 1)])

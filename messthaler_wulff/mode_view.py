@@ -38,7 +38,7 @@ def show_matplotlib():
 ################################################################################
 # Config done
 
-def run_mode(initial, lattice, use_orthogonal_projection=False, show_axes=True, show_points=True, show_lines=False,
+def run_mode(initial, lattice, use_orthogonal_projection=False, show_axes=True, show_points=True, line_length=None,
              show_convex_hull=True):
     setup_matplotlib(use_orthogonal_projections=use_orthogonal_projection, show_axes=show_axes)
 
@@ -54,8 +54,8 @@ def run_mode(initial, lattice, use_orthogonal_projection=False, show_axes=True, 
 
     if show_points:
         result @= points
-    if show_lines:
-        result @= auto_lines(points, 1)
+    if line_length is not None:
+        result @= auto_lines(points, line_length)
     if show_convex_hull:
         result @= convex_hull(points)
 

@@ -1,9 +1,13 @@
 import logging
 import math
+from collections.abc import Callable, MutableSet
 from dataclasses import dataclass
 
+from sortedcontainers import SortedSet
+
+from . import CrystalNotHasher
 from .additive_simulation import OmniSimulation
-from .simulation_state import CrystalHasher, AdvancedSimulation
+from .simulation_state import AdvancedSimulation
 
 log = logging.getLogger("messthaler_wulff")
 log.debug(f"Loading {__name__}")
@@ -17,8 +21,8 @@ class Data:
 
 
 class ExplorativeSimulation:
-    def __init__(self, omni: OmniSimulation, hasher: CrystalHasher):
-        self.sim = AdvancedSimulation(omni, hasher)
+    def __init__(self, omni: OmniSimulation, atom_collection: MutableSet=SortedSet, hasher: Callable=CrystalNotHasher):
+        self.sim = AdvancedSimulation(omni, atom_collection, hasher)
 
         self.cache = [Data((self.sim.initial_state,), 0, 1)]
 
@@ -55,3 +59,6 @@ class ExplorativeSimulation:
 
     def crystal_count(self, n: int):
         return self.get_data(n).count
+
+    def relevant_data(self, n: int):
+        return self.min_energy(n), self.crystal_count(n)

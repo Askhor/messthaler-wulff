@@ -1,75 +1,72 @@
-import hashlib
 import logging
-import math
-from abc import ABC, abstractmethod
-
-from sortedcontainers import SortedSet
+from collections.abc import MutableSet, Callable, Iterable
 
 from messthaler_wulff.additive_simulation import OmniSimulation
 
 log = logging.getLogger("messthaler_wulff")
-log.debug(f"Loading {__name__}")
 
 
-class CrystalHasher(ABC):
-    @abstractmethod
-    def add_atom(self, atom):
-        pass
+class TISortedSet(MutableSet):
+    class TIIterator:
 
-    @abstractmethod
-    def remove_atom(self, atom):
-        pass
+        def minus(self, p1, p2):
+            return tuple(p1[i] - p2[i] for i in range(self.dimension + 1))
 
-    @abstractmethod
-    def hash(self):
-        pass
+        def __init__(self, dimension: int, s):
+            self.dimension = dimension
+            self.minimum = s[0]
+            self.set = s
+            self.iter = iter(s)
+
+        def __next__(self):
+            return self.minus(next(self.iter), self.set[0])
+
+    def __init__(self, dimension: int, s: MutableSet):
+        self.dimension = dimension
+        self.set = s
+
+    def __iter__(self):
+        return self.TIIterator(self.dimension, self.set)
+
+    def add(self, value):
+        self.set.add(value)
+
+    def discard(self, value):
+        self.set.discard(value)
+
+    def __contains__(self, x):
+        return x in self.set
+
+    def __len__(self):
+        return len(self.set)
+
+    @classmethod
+    def wrap(cls, dimension, set_type):
+        return lambda i: cls(dimension, set_type(i))
 
 
-class SimpleCrystalHasher(CrystalHasher):
+class StupidCrystalHasher(Callable):
+    def __call__(self, i: Iterable):
+        return None
+
+
+class SimpleCrystalHasher(Callable):
     def __init__(self, hash_function):
-        self.atoms = SortedSet()
         self.hash_function = hash_function
 
-    def add_atom(self, atom):
-        self.atoms.add(atom)
-
-    def remove_atom(self, atom):
-        self.atoms.discard(atom)
-
-    def hash(self):
+    def __call__(self, i: Iterable):
         the_hash = self.hash_function()
 
-        for atom in self.atoms:
+        for atom in i:
             the_hash.update(str(atom).encode('utf-8'))
 
         return the_hash.hexdigest()
 
-class TICrystalHasher(CrystalHasher):
-    def __init__(self, dimension, hash_function):
-        self.atoms = SortedSet()
-        self.dimension = dimension
-        self.hash_function = hash_function
 
-    def add_atom(self, atom):
-        self.atoms.add(atom)
+class CrystalNotHasher(Callable):
+    def __call__(self, i: Iterable):
+        return frozenset(i)
 
-    def remove_atom(self, atom):
-        self.atoms.discard(atom)
-
-    def hash(self):
-        minima = [math.inf] * (self.dimension + 1)
-
-        for atom in self.atoms:
-            for i in range(self.dimension + 1):
-                minima[i] = min(minima[i], atom[i])
-
-        the_hash = self.hash_function()
-
-        for atom in self.atoms:
-            for i in range(self.dimension + 1):
-                the_hash.update(str(atom[i] - minima[i]).encode('utf-8'))
-
-        return the_hash.hexdigest()
 
 class SimulationState:
     def __init__(self, sim, parent, new_atom):
@@ -133,12 +130,13 @@ class SimulationState:
 
     def as_list(self):
         self.sim.goto(self)
-        return list(sorted(self.sim.omni.points()))
+        return tuple(sorted(self.sim.omni.points()))
 
 
 class AdvancedSimulation:
-    def __init__(self, omni: OmniSimulation, hasher: CrystalHasher):
+    def __init__(self, omni: OmniSimulation, atom_collection, hasher: Callable):
         self.omni = omni
+        self.atoms = atom_collection(omni.points())
         self.hasher = hasher
         self.initial_state = SimulationState.new_root(self)
         self.state = self.initial_state
@@ -153,7 +151,7 @@ class AdvancedSimulation:
 
     @property
     def hash(self):
-        return self.hasher.hash()
+        return self.hasher(self.atoms)
 
     def next_atoms(self):
         return self.omni.next_atoms(OmniSimulation.FORWARDS)
@@ -161,7 +159,7 @@ class AdvancedSimulation:
     def add_atom(self, atom):
         self.omni.force_set_atom(atom, OmniSimulation.FORWARDS)
         self.state = self.state.add_atom(atom)
-        self.hasher.add_atom(atom)
+        self.atoms.add(atom)
 
     def pop_atom(self):
         if self.state == self.initial_state:
@@ -170,10 +168,9 @@ class AdvancedSimulation:
 
         self.omni.force_set_atom(atom, OmniSimulation.BACKWARDS)
         self.state = self.state.parent
-        self.hasher.remove_atom(atom)
+        self.atoms.discard(atom)
 
     def goto(self, state: SimulationState):
-
         atoms_to_add = []
 
         while self.atom_count > state.atom_count:

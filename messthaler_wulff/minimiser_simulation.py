@@ -8,20 +8,6 @@ log = logging.getLogger("messthaler_wulff")
 log.debug(f"Loading {__name__}")
 
 
-def hacky_cache(cache_name):
-    def deco(function):
-        def impl(self, n: int):
-            cache = getattr(self, cache_name)
-            while len(cache) < n + 1:
-                cache.append(function(self, len(cache)))
-
-            return cache[n]
-
-        return impl
-
-    return deco
-
-
 class MinimiserSimulation:
     def __init__(self, omni_simulation: OmniSimulation, hasher: CrystalHasher):
         self.sim = AdvancedSimulation(omni_simulation, hasher)

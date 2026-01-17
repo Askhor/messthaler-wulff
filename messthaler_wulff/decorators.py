@@ -14,3 +14,17 @@ def log_invocation(function):
         return result
 
     return impl
+
+
+def hacky_instance_cache(cache_name):
+    def deco(function):
+        def impl(self, n: int):
+            cache = getattr(self, cache_name)
+            while len(cache) < n + 1:
+                cache.append(function(self, len(cache)))
+
+            return cache[n]
+
+        return impl
+
+    return deco

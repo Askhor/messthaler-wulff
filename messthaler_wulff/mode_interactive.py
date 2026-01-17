@@ -1,7 +1,11 @@
+import logging
 import random
 
 from .additive_simulation import SimpleNeighborhood, OmniSimulation
 from .progress import ProgressBar
+
+log = logging.getLogger("messthaler_wulff")
+log.debug(f"Loading {__name__}")
 
 
 def run_mode(goal, dimension, lattice, windows_mode, initial):

@@ -1,8 +1,12 @@
+import logging
 from abc import ABC, abstractmethod
 
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.linalg as la
+
+log = logging.getLogger("messthaler_wulff")
+log.debug(f"Loading {__name__}")
 
 ax = None
 

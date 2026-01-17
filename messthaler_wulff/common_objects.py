@@ -1,4 +1,9 @@
+import logging
+
 from data import *
+
+log = logging.getLogger("messthaler_wulff")
+log.debug(f"Loading {__name__}")
 
 
 ################################################################################

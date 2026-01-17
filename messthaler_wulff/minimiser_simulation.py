@@ -5,6 +5,7 @@ from .additive_simulation import OmniSimulation
 from .simulation_state import CrystalHasher, AdvancedSimulation
 
 log = logging.getLogger("messthaler_wulff")
+log.debug(f"Loading {__name__}")
 
 
 def hacky_cache(cache_name):

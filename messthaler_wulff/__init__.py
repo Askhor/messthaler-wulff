@@ -2,8 +2,13 @@ import argparse
 import hashlib
 import logging
 import math
+import os
+import sys
+from abc import abstractmethod, ABC
+from argparse import ArgumentParser
 
 import numpy as np
+# from gooey import GooeyParser
 
 from .data import fcc_transform
 from .terminal_formatting import parse_color
@@ -42,6 +47,13 @@ def parse_lattice(lattice):
     input("Press enter to continue...")
     return transform
 
+def parse_hash_function(algo):
+    if algo not in hashlib.algorithms_available:
+        log.error(f"Unknown hash algorithm {algo}")
+        log.error(f"The following hash algorithms are available: {", ".join(hashlib.algorithms_available)}")
+        raise ValueError()
+
+    return lambda: hashlib.new(algo)
 
 def parse_initial_crystal(initial_crystal, dimension):
     if initial_crystal is None:
@@ -61,80 +73,148 @@ def parse_initial_crystal(initial_crystal, dimension):
     return value
 
 
-def main():
-    MODES = "view", "simulate", "interactive", "explore", "minimisers"
-    MODE_STRING = " or ".join("'" + m + "'" for m in MODES)
+class Mode(ABC):
+    modes = []
 
-    parser = argparse.ArgumentParser(prog=PROGRAM_NAME,
-                                     description="Wudduwudduwudduwudduwudduwudduwudduwuddu",
-                                     allow_abbrev=True, add_help=True, exit_on_error=True)
+    @classmethod
+    @abstractmethod
+    def create_parser(cls, obj) -> ArgumentParser:
+        parser = obj.add_parser(cls.name, description=cls.description, help=cls.description)
+        parser.set_defaults(mode=cls)
+        return parser
+
+    @classmethod
+    @abstractmethod
+    def call(cls, args):
+        pass
+
+
+@Mode.modes.append
+class View(Mode):
+    name = "view"
+    description = "Use Matplotlib to visualise a crystal in 3d"
+
+    @classmethod
+    def create_parser(cls, obj):
+        parser = super().create_parser(obj)
+        parser.add_argument("-o", "--orthogonal", action="store_true")
+        parser.add_argument("-a", "--axis", action="store_true")
+        parser.add_argument("-p", "--points", action="store_true")
+        parser.add_argument("-l", "--lines", action="store_true")
+        parser.add_argument("-c", "--convex-hull", action="store_true")
+        return parser
+
+    @classmethod
+    def call(cls, args):
+        if not (args.axis or args.points or args.lines):
+            log.error("At least one of the following must be present for view: -p, -l or -c")
+            sys.exit(1)
+
+        from .mode_view import run_mode
+        run_mode(use_orthogonal_projection=args.orthogonal,
+                 show_axes=args.axis,
+                 show_points=args.points,
+                 show_lines=args.lines,
+                 show_convex_hull=args.convex_hull,
+                 initial=parse_initial_crystal(args.initial_crystal, args.dimension),
+                 lattice=args.lattice)
+
+
+@Mode.modes.append
+class Interactive(Mode):
+    name = "interactive"
+    description = "Explore a 2d slice of a crystal using commands"
+
+    @classmethod
+    def create_parser(cls, obj) -> ArgumentParser:
+        parser = super().create_parser(obj)
+        return parser
+
+    @classmethod
+    def call(cls, args):
+        from .mode_interactive import run_mode
+        run_mode(goal=int(args.goal), dimension=args.dimension,
+                 lattice=args.lattice, windows_mode=args.windows,
+                 initial=parse_initial_crystal(args.initial_crystal, args.dimension))
+
+
+@Mode.modes.append
+class Simulate(Mode):
+    name = "simulate"
+    description = "Simulate massive crystals in 3d (On Linux may require environment variable XDG_SESSION_TYPE=x11)"
+
+    @classmethod
+    def create_parser(cls, obj) -> ArgumentParser:
+        parser = super().create_parser(obj)
+        return parser
+
+    @classmethod
+    def call(cls, args):
+        os.environ["XDG_SESSION_TYPE"] = "x11"
+        from .mode_simulate import run_mode
+        run_mode(goal=args.goal, lattice=args.lattice)
+
+
+@Mode.modes.append
+class Explore(Mode):
+    name = "explore"
+    description = "Explore the number of crystals and optimal energies"
+
+    @classmethod
+    def create_parser(cls, obj) -> ArgumentParser:
+        parser = super().create_parser(obj)
+        parser.add_argument("--dump-crystals", action="store_true")
+        parser.add_argument("--hash-function", default="sha256", type=parse_hash_function,
+                            help="(default: %(default)s)")
+        return parser
+
+    @classmethod
+    def call(cls, args):
+        from .mode_explore import run_mode
+        run_mode(goal=args.goal, lattice=args.lattice, dimension=args.dimension,
+                 dump_crystals=args.dump_crystals, hash_function=args.hash_function)
+
+
+@Mode.modes.append
+class Gui(Mode):
+    name = "gui"
+    description = "Opens a simple gui interface for the command-line application using Gooey"
+
+    @classmethod
+    def create_parser(cls, obj) -> ArgumentParser:
+        parser = super().create_parser(obj)
+        return parser
+
+    @classmethod
+    def call(cls, args):
+        main(GooeyParser)
+
+
+def main(parser_constructor=argparse.ArgumentParser):
+    parser = parser_constructor(prog=PROGRAM_NAME,
+                                description="Wudduwudduwudduwudduwudduwudduwudduwuddu")
 
     parser.add_argument('-v', '--verbose', action='store_true', help="Show more output")
     parser.add_argument("--version", action="version", version=f"%(prog)s {program_version}")
-    parser.add_argument("MODE",
-                        help=f"What subprogram to execute; Can be {MODE_STRING}")
 
-    parser.add_argument("--goal", help="The number of atoms to add initially (default: %(default)s)", type=int,
-                        default="100")
-    parser.add_argument("--dump-crystals", action="store_true")
-
-    parser.add_argument("-o", "--view-options", default="acp",
-                        help=("A sequence of letters the presence of which indicates certain suboptions: "
-                              "a - Show axis, "
-                              "o - Use orthogonal projection, "
-                              "p - Show points, "
-                              "l - Insert lines between points, "
-                              "c - Show convex hull of points"))
+    parser.add_argument("--goal", help="The number of atoms to add initially or to go to (default: %(default)s)",
+                        type=int,
+                        default=20)
 
     lattice_options = parser.add_argument_group("Lattice Options")
-    lattice_options.add_argument("--lattice", default="fcc", help="(default: %(default)s)")
+    lattice_options.add_argument("--lattice", default="fcc", type=parse_lattice, help="(default: %(default)s)")
     lattice_options.add_argument("--dimension", default="3", type=int, help="(default: %(default)s)")
     lattice_options.add_argument("--initial-crystal", default=None)
 
-    internal_options = parser.add_argument_group("Internal Options")
-    internal_options.add_argument("--hash-function", default="sha256", help="(default: %(default)s)")
-    internal_options.add_argument("-w", "--windows", action="store_true")
+    parser.add_argument("-w", "--windows", action="store_true")
+
+    subparsers = parser.add_subparsers(title="Modes", description="Possible modes of operation", required=True)
+    for mode in Mode.modes:
+        mode.create_parser(subparsers)
 
     args = parser.parse_args()
 
     log.setLevel(logging.DEBUG if args.verbose else logging.INFO)
     log.debug("Starting program...")
 
-    if args.hash_function not in hashlib.algorithms_available:
-        log.error(f"Unknown hash algorithm {args.hash_function}")
-        log.error(f"The following hash algorithms are available: {", ".join(hashlib.algorithms_available)}")
-
-    hash_function = lambda: hashlib.new(args.hash_function)
-
-    dimension = int(args.dimension)
-
-    match args.MODE.lower():
-        case 'view':
-            from . import mode_view
-            mode_view.run_mode(use_orthogonal_projections="o" in args.view_options,
-                               show_axes="a" in args.view_options,
-                               show_points="p" in args.view_options,
-                               show_lines="l" in args.view_options,
-                               show_convex_hull="c" in args.view_options,
-                               initial=parse_initial_crystal(args.initial_crystal, dimension),
-                               lattice=parse_lattice(args.lattice))
-        case 'simulate':
-            from . import mode_simulate
-            mode_simulate.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice))
-        case 'interactive':
-            from . import mode_interactive
-            mode_interactive.run_mode(goal=int(args.goal), dimension=dimension,
-                                      lattice=parse_lattice(args.lattice), windows_mode=args.windows,
-                                      initial=parse_initial_crystal(args.initial_crystal, dimension))
-        case 'explore':
-            from . import mode_explore
-            mode_explore.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice),
-                                  dimension=int(args.dimension), dump_crystals=args.dump_crystals,
-                                  hash_function=hash_function)
-        case 'minimisers':
-            from . import mode_minimisers
-            mode_minimisers.run_mode(goal=int(args.goal), lattice=parse_lattice(args.lattice),
-                                     dimension=int(args.dimension), dump_crystals=args.dump_crystals,
-                                     hash_function=hash_function)
-        case _:
-            log.error(f"Unknown mode {args.MODE}. Must be one of {MODE_STRING}")
+    args.mode.call(args)

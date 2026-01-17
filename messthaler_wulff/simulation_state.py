@@ -8,6 +8,7 @@ from sortedcontainers import SortedSet
 from messthaler_wulff.additive_simulation import OmniSimulation
 
 log = logging.getLogger("messthaler_wulff")
+log.debug(f"Loading {__name__}")
 
 
 class CrystalHasher(ABC):

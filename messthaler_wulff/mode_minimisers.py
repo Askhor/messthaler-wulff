@@ -7,6 +7,7 @@ from messthaler_wulff.minimiser_simulation import MinimiserSimulation
 from messthaler_wulff.simulation_state import TICrystalHasher
 
 log = logging.getLogger("messthaler_wulff")
+log.debug(f"Loading {__name__}")
 
 
 def show_results(energies, counts):

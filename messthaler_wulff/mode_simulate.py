@@ -8,6 +8,9 @@ from .additive_simulation import SimpleNeighborhood, OmniSimulation
 from .data import *
 from .progress import ProgressBar
 
+log = logging.getLogger("messthaler_wulff")
+log.debug(f"Loading {__name__}")
+
 
 def plot_sim(sim, lattice):
     points = o3d.geometry.PointCloud()

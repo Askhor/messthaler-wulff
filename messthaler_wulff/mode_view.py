@@ -1,3 +1,6 @@
+import logging
+import sys
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,6 +9,8 @@ import messthaler_wulff.objects as objects
 from messthaler_wulff.objects import ObjectCollection
 from messthaler_wulff.utils import convex_hull, auto_lines
 
+log = logging.getLogger("messthaler_wulff")
+log.debug(f"Loading {__name__}")
 
 ################################################################################
 # Some very technical configuration
@@ -33,9 +38,13 @@ def show_matplotlib():
 ################################################################################
 # Config done
 
-def run_mode(initial, lattice, use_orthogonal_projections=False, show_axes=True, show_points=True, show_lines=False,
+def run_mode(initial, lattice, use_orthogonal_projection=False, show_axes=True, show_points=True, show_lines=False,
              show_convex_hull=True):
-    setup_matplotlib(use_orthogonal_projections=use_orthogonal_projections, show_axes=show_axes)
+    setup_matplotlib(use_orthogonal_projections=use_orthogonal_projection, show_axes=show_axes)
+
+    if len(initial) <= 0:
+        log.error("Must provide at least one point")
+        sys.exit(1)
 
     points = [p[-3:] for p in initial]
     points = [np.dot(lattice, p) for p in points]

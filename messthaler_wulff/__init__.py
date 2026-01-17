@@ -8,7 +8,6 @@ from abc import abstractmethod, ABC
 from argparse import ArgumentParser
 
 import numpy as np
-# from gooey import GooeyParser
 
 from .data import fcc_transform
 from .terminal_formatting import parse_color
@@ -47,6 +46,7 @@ def parse_lattice(lattice):
     input("Press enter to continue...")
     return transform
 
+
 def parse_hash_function(algo):
     if algo not in hashlib.algorithms_available:
         log.error(f"Unknown hash algorithm {algo}")
@@ -54,6 +54,7 @@ def parse_hash_function(algo):
         raise ValueError()
 
     return lambda: hashlib.new(algo)
+
 
 def parse_initial_crystal(initial_crystal, dimension):
     if initial_crystal is None:
@@ -100,7 +101,7 @@ class View(Mode):
         parser.add_argument("-o", "--orthogonal", action="store_true")
         parser.add_argument("-a", "--axis", action="store_true")
         parser.add_argument("-p", "--points", action="store_true")
-        parser.add_argument("-l", "--lines", action="store_true")
+        parser.add_argument("-l", "--lines", type=float, default=None)
         parser.add_argument("-c", "--convex-hull", action="store_true")
         return parser
 
@@ -114,7 +115,7 @@ class View(Mode):
         run_mode(use_orthogonal_projection=args.orthogonal,
                  show_axes=args.axis,
                  show_points=args.points,
-                 show_lines=args.lines,
+                 line_length=args.lines,
                  show_convex_hull=args.convex_hull,
                  initial=parse_initial_crystal(args.initial_crystal, args.dimension),
                  lattice=args.lattice)
@@ -175,24 +176,9 @@ class Explore(Mode):
                  dump_crystals=args.dump_crystals, hash_function=args.hash_function)
 
 
-@Mode.modes.append
-class Gui(Mode):
-    name = "gui"
-    description = "Opens a simple gui interface for the command-line application using Gooey"
-
-    @classmethod
-    def create_parser(cls, obj) -> ArgumentParser:
-        parser = super().create_parser(obj)
-        return parser
-
-    @classmethod
-    def call(cls, args):
-        main(GooeyParser)
-
-
-def main(parser_constructor=argparse.ArgumentParser):
-    parser = parser_constructor(prog=PROGRAM_NAME,
-                                description="Wudduwudduwudduwudduwudduwudduwudduwuddu")
+def main():
+    parser = argparse.ArgumentParser(prog=PROGRAM_NAME,
+                                     description="Wudduwudduwudduwudduwudduwudduwudduwuddu")
 
     parser.add_argument('-v', '--verbose', action='store_true', help="Show more output")
     parser.add_argument("--version", action="version", version=f"%(prog)s {program_version}")

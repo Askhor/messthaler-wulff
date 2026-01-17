@@ -70,27 +70,35 @@ def main():
                                      allow_abbrev=True, add_help=True, exit_on_error=True)
 
     parser.add_argument('-v', '--verbose', action='store_true', help="Show more output")
-    parser.add_argument("--version", action="store_true", help="Show the current version of the program")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {program_version}")
     parser.add_argument("MODE",
                         help=f"What subprogram to execute; Can be {MODE_STRING}")
-    parser.add_argument("--goal", help="The number of atoms to add initially", default="100")
-    parser.add_argument("--dimension", default="3")
-    parser.add_argument("--lattice", default="fcc")
-    parser.add_argument("--axis", action="store_true")
-    parser.add_argument("--orthogonal", action="store_true")
+
+    parser.add_argument("--goal", help="The number of atoms to add initially (default: %(default)s)", type=int,
+                        default="100")
     parser.add_argument("--dump-crystals", action="store_true")
-    parser.add_argument("-w", "--windows", action="store_true")
-    parser.add_argument("--initial-crystal", default=None)
-    parser.add_argument("--hash-function", default="sha256")
+
+    parser.add_argument("-o", "--view-options", default="acp",
+                        help=("A sequence of letters the presence of which indicates certain suboptions: "
+                              "a - Show axis, "
+                              "o - Use orthogonal projection, "
+                              "p - Show points, "
+                              "l - Insert lines between points, "
+                              "c - Show convex hull of points"))
+
+    lattice_options = parser.add_argument_group("Lattice Options")
+    lattice_options.add_argument("--lattice", default="fcc", help="(default: %(default)s)")
+    lattice_options.add_argument("--dimension", default="3", type=int, help="(default: %(default)s)")
+    lattice_options.add_argument("--initial-crystal", default=None)
+
+    internal_options = parser.add_argument_group("Internal Options")
+    internal_options.add_argument("--hash-function", default="sha256", help="(default: %(default)s)")
+    internal_options.add_argument("-w", "--windows", action="store_true")
 
     args = parser.parse_args()
 
     log.setLevel(logging.DEBUG if args.verbose else logging.INFO)
     log.debug("Starting program...")
-
-    if args.version:
-        log.info(f"{PROGRAM_NAME} version {program_version}")
-        return
 
     if args.hash_function not in hashlib.algorithms_available:
         log.error(f"Unknown hash algorithm {args.hash_function}")
@@ -103,7 +111,11 @@ def main():
     match args.MODE.lower():
         case 'view':
             from . import mode_view
-            mode_view.run_mode(use_orthogonal_projections=args.orthogonal, show_axes=args.axis,
+            mode_view.run_mode(use_orthogonal_projections="o" in args.view_options,
+                               show_axes="a" in args.view_options,
+                               show_points="p" in args.view_options,
+                               show_lines="l" in args.view_options,
+                               show_convex_hull="c" in args.view_options,
                                initial=parse_initial_crystal(args.initial_crystal, dimension),
                                lattice=parse_lattice(args.lattice))
         case 'simulate':

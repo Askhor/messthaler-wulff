@@ -112,7 +112,7 @@ def convex_hull(points: ObjectCollection):
 
         triangles.append(Triangle(*tri))
 
-    return points @ ObjectCollection(triangles)
+    return ObjectCollection(triangles)
 
 
 def voronoi(points: ObjectCollection, position: np.ndarray, length):

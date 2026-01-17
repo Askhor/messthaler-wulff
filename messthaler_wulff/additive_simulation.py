@@ -334,7 +334,7 @@ class OmniSimulation:
                         self.fill(lambda l: random.randrange(l))
                     case "exit":
                         break
-                    case "?":
+                    case "?" | "help":
                         input("""
 add         - Adds the next atom in the sequence
 rm          - Removes the next atom in the reverse sequence

@@ -232,6 +232,17 @@ def remove_last(a: list[FreePrimitive]):
 
     a.pop()
 
+def elements(a: tuple[FreePrimitive]):
+    if isinstance(a, FreePrimitive):
+        if a.length == 1:
+            yield a.first
+        else:
+            yield from elements_reversed(a.part_a)
+            yield from elements_reversed(a.part_b)
+        return
+
+    for p in a:
+        yield from elements_reversed(p)
 
 def elements_reversed(a: tuple[FreePrimitive]):
     if isinstance(a, FreePrimitive):

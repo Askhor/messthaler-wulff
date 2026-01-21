@@ -3,8 +3,9 @@ import random
 
 class FreePrimitive:
     primitives = {}
+    extended_to_string = False
 
-    def __init__(self, length, first, last, part_a, part_b):
+    def __init__(self, length: int, first, last, part_a: 'FreePrimitive', part_b: 'FreePrimitive'):
         assert length > 0
         assert length - 1 & length == 0  # Is power of two
 
@@ -28,13 +29,13 @@ class FreePrimitive:
     def __hash__(self):
         return self.id
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'FreePrimitive'):
         return self is other
 
     def __len__(self):
         return self.length
 
-    def __add__(self, other):
+    def __add__(self, other: 'FreePrimitive'):
         assert other.length >= self.length
 
         if other in self.next:
@@ -78,6 +79,8 @@ class FreePrimitive:
     def __str__(self):
         if self.length == 1:
             return str(self.first)
+        elif self.extended_to_string:
+            return str(self.part_a) + ":" + str(self.part_b)
         else:
             return str(self.part_a) + str(self.part_b)
 
@@ -186,3 +189,49 @@ def rexlca(a: tuple[FreePrimitive], b: tuple[FreePrimitive]):
     reduce_right(a)
     reduce_right(b)
     return tuple(reversed(out)), tuple(a), tuple(b)
+
+
+def insert(a: tuple[FreePrimitive], b: FreePrimitive) -> tuple[FreePrimitive]:
+    if isinstance(a, FreePrimitive):
+        a = [a]
+
+    element = b.first
+
+    out = list(a)
+    i = 0
+
+    while True:
+        if i >= len(out):
+            join_into(out, b)
+            return tuple(out)
+        elif element <= out[i].first:
+            out.insert(i, b)
+            return reduce(out)
+        elif element > out[i].last:
+            i += 1
+        else:
+            value = out[i]
+            out[i] = value.part_a
+            out.insert(i + 1, value.part_b)
+
+
+def remove(a: tuple[FreePrimitive], element) -> tuple[FreePrimitive]:
+    if isinstance(a, FreePrimitive):
+        a = [a]
+
+    out = list(a)
+    i = 0
+
+    while True:
+        if i >= len(out) or element < out[i].first:
+            raise ValueError(f"Primitive {element} was not present in {a}")
+        elif element > out[i].last:
+            i += 1
+        elif out[i].length == 1:
+            assert out[i].first == element
+            del out[i]
+            return reduce(out)
+        else:
+            value = out[i]
+            out[i] = value.part_a
+            out.insert(i + 1, value.part_b)

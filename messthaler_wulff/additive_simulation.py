@@ -6,6 +6,7 @@ from collections import defaultdict
 
 import numpy as np
 
+from messthaler_wulff.terminal_formatting import wipe_screen
 from .progress import ProgressBar
 
 
@@ -376,10 +377,6 @@ Press Enter to continue execution
 
     def __str__(self):
         return "[" + ", ".join(map(str, sorted(self.points()))) + "]"
-
-
-def wipe_screen():
-    print(f"\x1b[3J\x1b[H\x1b[J", end="")
 
 
 def move(atom, offset):

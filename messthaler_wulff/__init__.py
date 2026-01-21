@@ -1,17 +1,15 @@
 import argparse
-import hashlib
 import logging
 import math
 import os
 import sys
 from abc import abstractmethod, ABC
 from argparse import ArgumentParser
+from pathlib import Path
 
 import numpy as np
-from sortedcontainers import SortedSet
 
 from .data import fcc_transform
-from .simulation_state import SimpleCrystalHasher, CrystalNotHasher, StupidCrystalHasher, TISortedSet
 from .terminal_formatting import parse_color
 from .version import program_version
 
@@ -32,6 +30,8 @@ def command_entry_point():
         main()
     except KeyboardInterrupt:
         log.warning("Program was interrupted by user")
+    except EOFError:
+        log.warning("Program ran out of input")
 
 
 def parse_lattice(lattice):
@@ -47,25 +47,6 @@ def parse_lattice(lattice):
 
     input("Press enter to continue...")
     return transform
-
-
-def parse_hash_function(dimension: int, algo: str):
-    if algo.startswith("ti:"):
-        s, h = parse_hash_function(dimension, algo[3:])
-        return TISortedSet.wrap(dimension, s), h
-
-    match algo.lower():
-        case "none":
-            return SortedSet, CrystalNotHasher()
-        case "stupid":
-            return SortedSet, StupidCrystalHasher()
-        case _ if algo in hashlib.algorithms_available:
-            return SortedSet, SimpleCrystalHasher(lambda: hashlib.new(algo))
-        case _:
-            log.error(f"Unknown hash algorithm {algo}")
-            log.error(
-                f"The following hash algorithms are available: {", ".join(hashlib.algorithms_available)}, none, stupid")
-            raise ValueError()
 
 
 def parse_initial_crystal(initial_crystal, dimension):
@@ -176,23 +157,19 @@ class Explore(Mode):
     @classmethod
     def create_parser(cls, obj) -> ArgumentParser:
         parser = super().create_parser(obj)
-        parser.add_argument("--dump-crystals", action="store_true")
-        parser.add_argument("-f", "--hash-function", default="ti:sha256",
-                            help="(default: %(default)s)")
-        parser.add_argument("-c", "--compare-hash-function", default=None)
+        parser.add_argument("-d", "--dump-crystals", type=Path, default=None)
+        parser.add_argument("-t", "--test", action="store_true")
+        parser.add_argument("-g", "--global-minimisers", action="store_true")
+        parser.add_argument("--no-translations", action="store_true")
+        parser.add_argument("--bidi", action="store_true")
         return parser
 
     @classmethod
     def call(cls, args):
-        chf = args.compare_hash_function
-        if chf is not None:
-            chf = parse_hash_function(args.dimension, args.compare_hash_function)
-
         from .mode_explore import run_mode
-        run_mode(goal=args.goal, lattice=args.lattice, dimension=args.dimension,
-                 dump_crystals=args.dump_crystals,
-                 hash_function=parse_hash_function(args.dimension, args.hash_function),
-                 compare_hash_function=chf)
+        run_mode(goal=args.goal, lattice=args.lattice, dimension=args.dimension, test=args.test,
+                 verbose=args.verbose, dump_crystals=args.dump_crystals, gm_mode=args.global_minimisers,
+                 ti=not args.no_translations, bidi=args.bidi)
 
 
 def main():

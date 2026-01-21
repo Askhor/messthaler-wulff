@@ -59,3 +59,7 @@ def print_temp(string):
 def hide_temp():
     """Remove the current temporary string from the console"""
     print("\x1b[1G\x1b[2K", end="", flush=True)
+
+
+def wipe_screen():
+    print(f"\x1b[3J\x1b[H\x1b[J", end="")

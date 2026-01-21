@@ -1,22 +1,11 @@
 import logging
 
-from prettytable import PrettyTable
-
+from messthaler_wulff import free_monoid
 from messthaler_wulff.additive_simulation import OmniSimulation, SimpleNeighborhood
 from messthaler_wulff.explorative_simulation import ExplorativeSimulation
 
 log = logging.getLogger("messthaler_wulff")
 log.debug(f"Loading {__name__}")
-
-
-def show_results(energies, counts):
-    table = PrettyTable(["nr atoms", "nr crystals", "min energy"], align='r')
-    table.custom_format = lambda f, v: f"{v:,}"
-
-    for i in range(len(counts)):
-        table.add_row([i, counts[i], energies[i]])
-
-    print(table)
 
 
 def compare_hash_functions(goal, dump_crystals, ex1, ex2):
@@ -41,24 +30,40 @@ def compare_hash_functions(goal, dump_crystals, ex1, ex2):
     log.info("Done")
 
 
-def run_mode(goal, lattice, dimension, dump_crystals, hash_function, compare_hash_function=None):
+def crystal_file_name(dimension, count, gm_mode, bidi, ti):
+    mode = ""
+    if gm_mode:
+        mode += "g"
+    if bidi:
+        mode += "b"
+    if ti:
+        mode += "t"
+    return f"Crystals in {dimension}d with {count} atoms (mode: {mode}).txt"
+
+
+def run_mode(goal, lattice, dimension, dump_crystals=None, test=False, verbose=False,
+             gm_mode=False, ti=True, bidi=True):
     omni_simulation = OmniSimulation(SimpleNeighborhood(lattice), None, tuple([0] * (dimension + 1)))
-    explorer = ExplorativeSimulation(omni_simulation, hash_function[0], hash_function[1])
+    explorer = ExplorativeSimulation(omni_simulation, goal, verbose=verbose,
+                                     gm_mode=gm_mode, ti=ti, bidi=bidi, collect_crystals=dump_crystals)
 
-    if compare_hash_function is not None:
-        omni_simulation2 = OmniSimulation(SimpleNeighborhood(lattice), None, tuple([0] * (dimension + 1)))
-        explorer2 = ExplorativeSimulation(omni_simulation2, compare_hash_function[0], compare_hash_function[1])
+    # if test:
+    #     for i, e in enumerate(TEST_ENERGIES):
+    #         if explorer.energies[i] > e:
+    #             log.error(f"At {i:2}: {explorer.energies[i]:3} greater than {e:3}")
+    #         elif explorer.energies[i] < e:
+    #             log.error(f"At {i:2}: {explorer.energies[i]:3} less than {e:3}")
+    #     return
 
-        compare_hash_functions(goal, dump_crystals, explorer, explorer2)
-        return
-
-    for n in range(goal + 1):
-        log.debug(f"{n:3}: {explorer.min_energy(n):4} {explorer.crystal_count(n):10}")
+    print(explorer)
 
     if dump_crystals:
-        for state in explorer.crystals(goal):
-            if state.energy == explorer.min_energy(goal):
-                print(state.as_list())
-    else:
-        show_results([explorer.min_energy(n) for n in range(goal + 1)],
-                     [explorer.crystal_count(n) for n in range(goal + 1)])
+        for i in range(goal):
+            file = dump_crystals / crystal_file_name(dimension, i, gm_mode, bidi, ti)
+            if file.exists():
+                log.error(f"File {file} already exists")
+                continue
+            file.write_text(("\n".join("["
+                                       + ", ".join(map(str, free_monoid.elements(c)))
+                                       + "]"
+                                       for c in explorer.crystals[i])))

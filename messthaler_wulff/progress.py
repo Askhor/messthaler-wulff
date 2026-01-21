@@ -130,13 +130,16 @@ class BasicProfiler:
         self.index += 1
 
 
-def debounce(function, interval=1):
-    last_call = [time.time()]
+def debounce(interval=1):
+    def deco(function):
+        last_call = [time.time()]
 
-    def impl(*args, **kwargs):
-        t = time.time()
-        if t >= last_call[0] + interval:
-            last_call[0] = t
-            function(*args, **kwargs)
+        def impl(*args, **kwargs):
+            t = time.time()
+            if t >= last_call[0] + interval:
+                last_call[0] = t
+                function(*args, **kwargs)
 
-    return impl
+        return impl
+
+    return deco

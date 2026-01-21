@@ -152,29 +152,19 @@ def is_correct_monoid(a: tuple[FreePrimitive]) -> bool:
     return True
 
 
-def rexlca(a: tuple[FreePrimitive], b: tuple[FreePrimitive]):
-    if isinstance(a, FreePrimitive):
-        a = [a]
-    else:
-        a = list(a)
-    if isinstance(b, FreePrimitive):
-        b = [b]
-    else:
-        b = list(b)
+def split_last(l: list[FreePrimitive]):
+    x1 = l[-1].part_a
+    x2 = l.pop().part_b
+    l.append(x1)
+    l.append(x2)
 
-    def split_last(l: list):
-        x1 = l[-1].part_a
-        x2 = l.pop().part_b
-        l.append(x1)
-        l.append(x2)
 
-    out = list()
-
+def remove_common_postfix(a: list[FreePrimitive], b: list[FreePrimitive]):
     while True:
         if len(a) == 0 or len(b) == 0:
             break
         elif a[-1] == b[-1]:
-            join_into(out, a.pop())
+            a.pop()
             b.pop()
         elif a[-1].length == 1 and b[-1].length == 1:
             break
@@ -188,7 +178,6 @@ def rexlca(a: tuple[FreePrimitive], b: tuple[FreePrimitive]):
 
     reduce_right(a)
     reduce_right(b)
-    return tuple(reversed(out)), tuple(a), tuple(b)
 
 
 def insert(a: tuple[FreePrimitive], b: FreePrimitive) -> tuple[FreePrimitive]:
@@ -235,3 +224,51 @@ def remove(a: tuple[FreePrimitive], element) -> tuple[FreePrimitive]:
             value = out[i]
             out[i] = value.part_a
             out.insert(i + 1, value.part_b)
+
+
+def remove_last(a: list[FreePrimitive]):
+    while a[-1].length > 1:
+        split_last(a)
+
+    a.pop()
+
+
+def elements_reversed(a: tuple[FreePrimitive]):
+    if isinstance(a, FreePrimitive):
+        if a.length == 1:
+            yield a.first
+        else:
+            yield from elements_reversed(a.part_b)
+            yield from elements_reversed(a.part_a)
+        return
+
+    for p in reversed(a):
+        yield from elements_reversed(p)
+
+
+def diff(a: tuple[FreePrimitive], b: tuple[FreePrimitive]):
+    if isinstance(a, FreePrimitive):
+        a = [a, ]
+    if isinstance(b, FreePrimitive):
+        b = [b, ]
+
+    a = list(a)
+    b = list(b)
+
+    while True:
+        remove_common_postfix(a, b)
+
+        if len(a) == 0:
+            for e in elements_reversed(b):
+                yield 1, e
+            return
+        elif len(b) == 0:
+            for e in elements_reversed(a):
+                yield 0, e
+            return
+        elif a[-1].last < b[-1].last:
+            yield 1, b[-1].last
+            remove_last(b)
+        else:
+            yield 0, a[-1].last
+            remove_last(a)

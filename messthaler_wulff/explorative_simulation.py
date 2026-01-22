@@ -1,13 +1,12 @@
 import logging
 import math
-from collections import defaultdict
 
 from prettytable import PrettyTable
 
-from . import free_monoid
+from .abstract_crystal_store import TICrystal
 from .additive_simulation import OmniSimulation
+from .advanced_simulation import DirectionalSimulation
 from .progress import debounce
-from .simulation_state import AdvancedSimulation
 from .terminal_formatting import wipe_screen
 
 log = logging.getLogger("messthaler_wulff")
@@ -24,56 +23,51 @@ class ExplorativeSimulation:
     def __init__(self, omni: OmniSimulation, goal: int,
                  gm_mode: bool = False, bidi: bool = True, verbose=False, ti=True,
                  collect_crystals=False):
-        self.sim = AdvancedSimulation(omni, OmniSimulation.FORWARDS if goal >= 0 else OmniSimulation.BACKWARDS, bidi)
-        self.goal = abs(goal) + 1
-        del goal
+        self.initial_count = omni.atoms
+        self.direction_sign = 1 if goal >= self.initial_count else -1
+        log.debug(f"Going in direction {self.direction_sign}")
+        self.upper_bound = max(goal, self.initial_count)
+        self.lower_bound = min(goal, self.initial_count)
+        self.nr_levels = self.upper_bound - self.lower_bound + 1
+
+        self.sim = DirectionalSimulation(omni,
+                                         1 if goal >= self.initial_count else 0)
+
         self.bidi = bidi
         self.gm_mode = gm_mode
         self.ti = ti
-        if ti:
-            self.translations = defaultdict(dict)
         self.verbose = verbose
         self.collect_crystals = collect_crystals
         if collect_crystals:
-            self.crystals = [list() for _ in range(self.goal)]
+            self.crystals = [list() for _ in range(self.nr_levels)]
 
-        self.energies = [math.inf] * self.goal
-        self.counts = [0] * self.goal
-        self.min_counts = [0] * self.goal
+        self.energies = [math.inf] * self.nr_levels
+        self.counts = [0] * self.nr_levels
+        self.min_counts = [0] * self.nr_levels
 
         self.visited = {self.sim.initial_state}
         self.stack = [self.sim.initial_state]
 
         self.run()
 
-    def translate(self, primitive, minus):
-        if minus in self.translations[primitive]:
-            return self.translations[primitive][minus]
-        elif primitive.length == 1:
-            value = free_monoid.FreePrimitive.wrap_primitive(
-                tuple(primitive.first[i] - minus[i] for i in range(len(minus))))
-        else:
-            value = self.translate(primitive.part_a, minus) + self.translate(primitive.part_b, minus)
+    def data_index(self, i: int) -> int:
+        return abs(i - self.initial_count)
 
-        self.translations[primitive][minus] = value
-        return value
+    @classmethod
+    def canonical_translation(cls, state):
+        return TICrystal(state)
 
-    def canonical_translation(self, state):
-        if state == ():
-            return ()
-        if isinstance(state, free_monoid.FreePrimitive):
-            return self.translate(state, state.first)
-
-        minus = state[-1].first
-        return tuple(self.translate(primitive, minus) for primitive in state)
-
-    def process_state(self, state):
+    def visit_state(self, state) -> bool:
         if self.ti:
             state = self.canonical_translation(state)
         if state in self.visited:
-            return
+            return False
         self.visited.add(state)
-        self.stack.append(state)
+        return True
+
+    def process_state(self, state):
+        if self.visit_state(state):
+            self.stack.append(state)
 
     def run(self):
         sim = self.sim
@@ -85,30 +79,34 @@ class ExplorativeSimulation:
 
             state = stack.pop()
 
-            count = sim.atom_count(state)
+            i = state.size
+            d = self.data_index(i)
+
+            assert 0 <= d < self.nr_levels
+
             new_energy = sim.energy(state)
-            if self.gm_mode and new_energy > self.energies[count]:
+            if self.gm_mode and new_energy > self.energies[d]:
                 continue
 
-            self.counts[count] += 1
-            if new_energy < self.energies[count]:
-                self.energies[count] = new_energy
-                self.min_counts[count] = 1
-                if self.collect_crystals:
-                    self.crystals[count] = [state]
-            elif new_energy == self.energies[count]:
-                self.min_counts[count] += 1
-                if self.collect_crystals:
-                    self.crystals[count].append(state)
+            self.counts[d] += 1
 
-            if count >= self.goal - 1:
-                continue
+            if new_energy < self.energies[d]:
+                self.energies[d] = new_energy
+                self.min_counts[d] = 1
+                if self.collect_crystals:
+                    self.crystals[d] = [state]
+            elif new_energy == self.energies[d]:
+                self.min_counts[d] += 1
+                if self.collect_crystals:
+                    self.crystals[d].append(state)
 
-            for next_state in sim.next_states(state):
-                self.process_state(next_state)
-            if self.bidi:
+            if self.bidi and d > 0:
                 for prev_state in sim.previous_states(state):
                     self.process_state(prev_state)
+            if d < self.nr_levels - 1:
+                for next_state in sim.next_states(state):
+                    self.data_index(next_state.size)
+                    self.process_state(next_state)
 
     @debounce()
     def debug_print(self):
@@ -116,21 +114,21 @@ class ExplorativeSimulation:
         print(self)
 
     def __str__(self):
-
         table = PrettyTable(
             ["Atoms", "Minimal Energy", "Total Crystals", "Optimal Crystals", "Classic algorithm", "Comparison"],
             align='r')
         table.custom_format = lambda f, v: f"{v:,}"
 
-        for i in range(self.goal):
-            test_energy = "-"
-            comparison = "-"
+        for i in range(self.lower_bound, self.upper_bound + 1):
+            d = self.data_index(i)
+            test_energy = math.nan
+            comparison = math.nan
             if i < len(self.TEST_ENERGIES):
                 test_energy = self.TEST_ENERGIES[i]
-                comparison = sign(self.energies[i] - self.TEST_ENERGIES[i])
+                comparison = sign(self.energies[d] - self.TEST_ENERGIES[i])
 
-            table.add_row([i, self.energies[i], self.counts[i],
-                           self.min_counts[i], test_energy, comparison])
+            table.add_row([i, self.energies[d], self.counts[d],
+                           self.min_counts[d], test_energy, comparison])
 
         return str(table)
 

@@ -1,6 +1,5 @@
 import logging
 
-from messthaler_wulff import free_monoid
 from messthaler_wulff.additive_simulation import OmniSimulation, SimpleNeighborhood
 from messthaler_wulff.explorative_simulation import ExplorativeSimulation
 
@@ -41,29 +40,24 @@ def crystal_file_name(dimension, count, gm_mode, bidi, ti):
     return f"Crystals in {dimension}d with {count} atoms (mode: {mode}).txt"
 
 
-def run_mode(goal, lattice, dimension, dump_crystals=None, test=False, verbose=False,
+def run_mode(goal, lattice, dimension, dump_crystals=None, verbose=False, initial=None,
              gm_mode=False, ti=True, bidi=True):
     omni_simulation = OmniSimulation(SimpleNeighborhood(lattice), None, tuple([0] * (dimension + 1)))
+    for atom in initial:
+        omni_simulation.force_set_atom(atom, OmniSimulation.FORWARDS)
     explorer = ExplorativeSimulation(omni_simulation, goal, verbose=verbose,
                                      gm_mode=gm_mode, ti=ti, bidi=bidi, collect_crystals=dump_crystals)
-
-    # if test:
-    #     for i, e in enumerate(TEST_ENERGIES):
-    #         if explorer.energies[i] > e:
-    #             log.error(f"At {i:2}: {explorer.energies[i]:3} greater than {e:3}")
-    #         elif explorer.energies[i] < e:
-    #             log.error(f"At {i:2}: {explorer.energies[i]:3} less than {e:3}")
-    #     return
 
     print(explorer)
 
     if dump_crystals:
-        for i in range(goal):
+        for i in range(explorer.lower_bound, explorer.upper_bound + 1):
+            d = explorer.data_index(i)
             file = dump_crystals / crystal_file_name(dimension, i, gm_mode, bidi, ti)
             if file.exists():
                 log.error(f"File {file} already exists")
                 continue
             file.write_text(("\n".join("["
-                                       + ", ".join(map(str, free_monoid.elements(c)))
+                                       + ", ".join(map(str, c.atoms()))
                                        + "]"
-                                       for c in explorer.crystals[i])))
+                                       for c in explorer.crystals[d])))

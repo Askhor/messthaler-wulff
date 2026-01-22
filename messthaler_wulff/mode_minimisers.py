@@ -4,7 +4,7 @@ from prettytable import PrettyTable
 
 from messthaler_wulff.additive_simulation import OmniSimulation, SimpleNeighborhood
 from messthaler_wulff.minimiser_simulation import MinimiserSimulation
-from messthaler_wulff.simulation_state import TICrystalHasher
+from messthaler_wulff.advanced_simulation import TICrystalHasher
 
 log = logging.getLogger("messthaler_wulff")
 log.debug(f"Loading {__name__}")

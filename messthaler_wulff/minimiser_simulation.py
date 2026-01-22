@@ -2,7 +2,7 @@ import logging
 import math
 
 from .additive_simulation import OmniSimulation
-from .simulation_state import CrystalHasher, AdvancedSimulation
+from .advanced_simulation import CrystalHasher, AdvancedSimulation
 
 log = logging.getLogger("messthaler_wulff")
 log.debug(f"Loading {__name__}")

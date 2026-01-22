@@ -158,18 +158,18 @@ class Explore(Mode):
     def create_parser(cls, obj) -> ArgumentParser:
         parser = super().create_parser(obj)
         parser.add_argument("-d", "--dump-crystals", type=Path, default=None)
-        parser.add_argument("-t", "--test", action="store_true")
         parser.add_argument("-g", "--global-minimisers", action="store_true")
         parser.add_argument("--no-translations", action="store_true")
-        parser.add_argument("--bidi", action="store_true")
+        parser.add_argument("--no-bidi", action="store_true")
         return parser
 
     @classmethod
     def call(cls, args):
         from .mode_explore import run_mode
-        run_mode(goal=args.goal, lattice=args.lattice, dimension=args.dimension, test=args.test,
-                 verbose=args.verbose, dump_crystals=args.dump_crystals, gm_mode=args.global_minimisers,
-                 ti=not args.no_translations, bidi=args.bidi)
+        run_mode(goal=args.goal, lattice=args.lattice,
+                 initial=parse_initial_crystal(args.initial_crystal, args.dimension),
+                 dimension=args.dimension, verbose=args.verbose, dump_crystals=args.dump_crystals,
+                 gm_mode=args.global_minimisers, ti=not args.no_translations, bidi=not args.no_bidi)
 
 
 def main():

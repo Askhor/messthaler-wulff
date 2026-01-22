@@ -198,5 +198,7 @@ def main():
 
     log.setLevel(logging.DEBUG if args.verbose else logging.INFO)
     log.debug("Starting program...")
+    if not __debug__:
+        log.info("Running in optimized mode")
 
     args.mode.call(args)

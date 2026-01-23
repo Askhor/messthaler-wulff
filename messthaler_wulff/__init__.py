@@ -53,6 +53,9 @@ def parse_initial_crystal(initial_crystal, dimension):
     if initial_crystal is None:
         return []
 
+    if initial_crystal == "-":
+        initial_crystal = input("Input initial crystal: ")
+
     value = eval(initial_crystal)
     log.info(f"Initial crystal has been set to {value}")
 
@@ -158,7 +161,7 @@ class Explore(Mode):
     def create_parser(cls, obj) -> ArgumentParser:
         parser = super().create_parser(obj)
         parser.add_argument("-d", "--dump-crystals", type=Path, default=None)
-        parser.add_argument("-g", "--global-minimisers", action="store_true")
+        parser.add_argument("-r", "--require-energy", type=int, default=None)
         parser.add_argument("--no-translations", action="store_true")
         parser.add_argument("--no-bidi", action="store_true")
         return parser
@@ -169,7 +172,7 @@ class Explore(Mode):
         run_mode(goal=args.goal, lattice=args.lattice,
                  initial=parse_initial_crystal(args.initial_crystal, args.dimension),
                  dimension=args.dimension, verbose=args.verbose, dump_crystals=args.dump_crystals,
-                 gm_mode=args.global_minimisers, ti=not args.no_translations, bidi=not args.no_bidi)
+                 require_energy=args.require_energy, ti=not args.no_translations, bidi=not args.no_bidi)
 
 
 def main():

@@ -21,7 +21,7 @@ class ExplorativeSimulation:
                      292, 296, 300, 302, 306, 306, 308, 308, 312]
 
     def __init__(self, omni: OmniSimulation, goal: int,
-                 gm_mode: bool = False, bidi: bool = True, verbose=False, ti=True,
+                 require_energy: int = None, bidi: bool = True, verbose=False, ti=True,
                  collect_crystals=False):
         self.initial_count = omni.atoms
         self.direction_sign = 1 if goal >= self.initial_count else -1
@@ -34,7 +34,7 @@ class ExplorativeSimulation:
                                          1 if goal >= self.initial_count else 0)
 
         self.bidi = bidi
-        self.gm_mode = gm_mode
+        self.require_energy = require_energy
         self.ti = ti
         self.verbose = verbose
         self.collect_crystals = collect_crystals
@@ -85,7 +85,7 @@ class ExplorativeSimulation:
             assert 0 <= d < self.nr_levels
 
             new_energy = sim.energy(state)
-            if self.gm_mode and new_energy > self.energies[d]:
+            if self.require_energy is not None and new_energy > self.energies[d] + self.require_energy:
                 continue
 
             self.counts[d] += 1
@@ -113,6 +113,9 @@ class ExplorativeSimulation:
         wipe_screen()
         print(self)
 
+    def comparison(self, i: int) -> int:
+        return self.energies[self.data_index(i)] - self.TEST_ENERGIES[i]
+
     def __str__(self):
         table = PrettyTable(
             ["Atoms", "Minimal Energy", "Total Crystals", "Optimal Crystals", "Classic algorithm", "Comparison"],
@@ -125,19 +128,9 @@ class ExplorativeSimulation:
             comparison = math.nan
             if i < len(self.TEST_ENERGIES):
                 test_energy = self.TEST_ENERGIES[i]
-                comparison = sign(self.energies[d] - self.TEST_ENERGIES[i])
+                comparison = self.comparison(i)
 
             table.add_row([i, self.energies[d], self.counts[d],
                            self.min_counts[d], test_energy, comparison])
 
         return str(table)
-
-
-def sign(x):
-    match x:
-        case 0:
-            return 0
-        case _ if x > 0:
-            return 1
-        case _:
-            return -1

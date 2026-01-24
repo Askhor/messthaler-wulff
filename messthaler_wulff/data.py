@@ -1,5 +1,3 @@
-import logging
-
 from .utils import *
 
 log = logging.getLogger("messthaler_wulff")

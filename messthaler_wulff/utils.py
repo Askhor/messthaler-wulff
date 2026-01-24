@@ -1,4 +1,3 @@
-import logging
 import math
 
 from scipy.spatial import ConvexHull, Voronoi

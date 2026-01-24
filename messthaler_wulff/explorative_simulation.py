@@ -14,11 +14,12 @@ log.debug(f"Loading {__name__}")
 
 
 class ExplorativeSimulation:
-    TEST_ENERGIES = [0, 12, 22, 30, 36, 44, 50, 54, 60, 66, 70, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120,
-                     124, 126, 130, 134, 138, 142, 144, 148, 150, 154, 158, 160, 164, 166, 168, 168, 172, 176, 180, 184,
-                     188, 192, 194, 198, 198, 202, 206, 210, 212, 216, 218, 222, 224, 224, 228, 230, 234, 238, 242, 244,
-                     246, 246, 250, 250, 252, 256, 260, 264, 268, 268, 270, 270, 274, 276, 280, 282, 286, 286, 288, 288,
-                     292, 296, 300, 302, 306, 306, 308, 308, 312]
+    TEST_ENERGIES: list[int] = [0, 12, 22, 30, 36, 44, 50, 54, 60, 66, 70, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112,
+                                116, 120, 124, 126, 130, 134, 138, 142, 144, 148, 150, 154, 158, 160, 164, 166, 168,
+                                168, 172, 176, 180, 184, 188, 192, 194, 198, 198, 202, 206, 210, 212, 216, 218, 222,
+                                224, 224, 228, 230, 234, 238, 242, 244, 246, 246, 250, 250, 252, 256, 260, 264, 268,
+                                268, 270, 270, 274, 276, 280, 282, 286, 286, 288, 288, 292, 296, 300, 302, 306, 306,
+                                308, 308, 312]
 
     def __init__(self, omni: OmniSimulation, goal: int,
                  require_energy: int = None, bidi: bool = True, verbose=False, ti=True,
@@ -39,9 +40,9 @@ class ExplorativeSimulation:
         self.verbose = verbose
         self.collect_crystals = collect_crystals
         if collect_crystals:
-            self.crystals = [list() for _ in range(self.nr_levels)]
+            self.crystals: list[list] = [list() for _ in range(self.nr_levels)]
 
-        self.energies = [math.inf] * self.nr_levels
+        self.energies: list[int] = [math.inf] * self.nr_levels
         self.counts = [0] * self.nr_levels
         self.min_counts = [0] * self.nr_levels
 
@@ -112,6 +113,7 @@ class ExplorativeSimulation:
     def debug_print(self):
         wipe_screen()
         print(self)
+        print(f"Stack size: {len(self.stack)}")
 
     def comparison(self, i: int) -> int:
         return self.energies[self.data_index(i)] - self.TEST_ENERGIES[i]

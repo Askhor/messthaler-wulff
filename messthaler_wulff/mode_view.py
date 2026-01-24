@@ -12,6 +12,7 @@ from messthaler_wulff.utils import convex_hull, auto_lines
 log = logging.getLogger("messthaler_wulff")
 log.debug(f"Loading {__name__}")
 
+
 ################################################################################
 # Some very technical configuration
 
@@ -50,7 +51,7 @@ def run_mode(initial, lattice, use_orthogonal_projection=False, show_axes=True, 
     points = [np.dot(lattice, p) for p in points]
     points = ObjectCollection.from_points(*np.transpose(points))
 
-    result = ObjectCollection.from_points([],[],[])
+    result = ObjectCollection.from_points([], [], [])
 
     if show_points:
         result @= points

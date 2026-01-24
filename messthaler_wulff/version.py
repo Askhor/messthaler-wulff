@@ -1,1 +1,1 @@
-program_version = "2026.1.8"
+program_version = "2026.1.12"

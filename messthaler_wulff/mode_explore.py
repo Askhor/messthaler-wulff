@@ -1,4 +1,6 @@
 import logging
+import os
+from pathlib import Path
 
 from messthaler_wulff.additive_simulation import OmniSimulation, SimpleNeighborhood
 from messthaler_wulff.explorative_simulation import ExplorativeSimulation
@@ -45,7 +47,7 @@ def crystal_file_name(dimension, count, require_energy, bidi, ti, initial, compa
     return f"Crystals in {dimension}d with {count} atoms (mode: {mode}).txt"
 
 
-def run_mode(goal, lattice, dimension, dump_crystals=None, verbose=False, initial=None,
+def run_mode(goal, lattice, dimension: int, dump_crystals=None, verbose=False, initial=None,
              require_energy=None, ti=True, bidi=True):
     omni_simulation = OmniSimulation(SimpleNeighborhood(lattice), None, tuple([0] * (dimension + 1)))
     for atom in initial:
@@ -63,11 +65,14 @@ def run_mode(goal, lattice, dimension, dump_crystals=None, verbose=False, initia
             comparison = None
             if i < len(explorer.TEST_ENERGIES):
                 comparison = explorer.comparison(i)
-            file = dump_crystals / crystal_file_name(dimension, i, require_energy, bidi, ti, initial, comparison)
+            file: Path = dump_crystals / crystal_file_name(dimension, i, require_energy, bidi, ti, initial, comparison)
             if file.exists():
                 log.error(f"File {file} already exists")
                 continue
-            file.write_text(("\n".join("["
-                                       + ", ".join(map(str, c.atoms()))
-                                       + "]"
-                                       for c in explorer.crystals[d])))
+            string: str = "\n".join("["
+                                    + ", ".join(map(str, c.atoms()))
+                                    + "]"
+                                    for c in explorer.crystals[d])
+            log.info(f"Writing {len(string)} bytes to {file.absolute()}")
+            file.write_text(string)
+            assert os.path.getsize(file) != 0, f"File {file} was not written"

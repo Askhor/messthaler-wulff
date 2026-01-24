@@ -59,20 +59,30 @@ def run_mode(goal, lattice, dimension: int, dump_crystals=None, verbose=False, i
         wipe_screen()
     print(explorer)
 
-    if dump_crystals:
-        for i in range(explorer.lower_bound, explorer.upper_bound + 1):
-            d = explorer.data_index(i)
-            comparison = None
-            if i < len(explorer.TEST_ENERGIES):
-                comparison = explorer.comparison(i)
-            file: Path = dump_crystals / crystal_file_name(dimension, i, require_energy, bidi, ti, initial, comparison)
-            if file.exists():
-                log.error(f"File {file} already exists")
-                continue
+    if dump_crystals is not None:
+        if dump_crystals == "-":
             string: str = "\n".join("["
                                     + ", ".join(map(str, c.atoms()))
                                     + "]"
-                                    for c in explorer.crystals[d])
-            log.info(f"Writing {len(string)} bytes to {file.absolute()}")
-            file.write_text(string)
-            assert os.path.getsize(file) != 0, f"File {file} was not written"
+                                    for c in explorer.crystals[explorer.data_index(goal)])
+            print()
+            print(string)
+        else:
+            dump_crystals = Path(dump_crystals)
+            for i in range(explorer.lower_bound, explorer.upper_bound + 1):
+                d = explorer.data_index(i)
+                comparison = None
+                if i < len(explorer.TEST_ENERGIES):
+                    comparison = explorer.comparison(i)
+                file: Path = dump_crystals / crystal_file_name(dimension, i, require_energy, bidi, ti, initial,
+                                                               comparison)
+                if file.exists():
+                    log.error(f"File {file} already exists")
+                    continue
+                string: str = "\n".join("["
+                                        + ", ".join(map(str, c.atoms()))
+                                        + "]"
+                                        for c in explorer.crystals[d])
+                log.info(f"Writing {len(string)} bytes to {file.absolute()}")
+                assert file.write_text(string) != 0, f"File {file} was not written to"
+                assert os.path.getsize(file) != 0, f"File {file} was not written to"

@@ -160,7 +160,7 @@ class Explore(Mode):
     @classmethod
     def create_parser(cls, obj) -> ArgumentParser:
         parser = super().create_parser(obj)
-        parser.add_argument("-d", "--dump-crystals", type=Path, default=None)
+        parser.add_argument("-d", "--dump-crystals", default=None)
         parser.add_argument("-r", "--require-energy", type=int, default=None)
         parser.add_argument("--no-translations", action="store_true")
         parser.add_argument("--no-bidi", action="store_true")

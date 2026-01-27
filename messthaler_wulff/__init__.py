@@ -5,7 +5,6 @@ import os
 import sys
 from abc import abstractmethod, ABC
 from argparse import ArgumentParser
-from pathlib import Path
 
 import numpy as np
 
@@ -38,6 +37,9 @@ def parse_lattice(lattice):
     match lattice.lower():
         case "fcc":
             return fcc_transform()
+        case "triangular":
+            return np.array([[1, 0.5],
+                             [0, math.sqrt(1-0.25)]])
 
     log.info(f"Unknown lattice name {lattice}, interpreting lattice as python code")
 

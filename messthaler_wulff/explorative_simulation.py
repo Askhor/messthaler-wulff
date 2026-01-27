@@ -127,10 +127,13 @@ class ExplorativeSimulation:
         process = psutil.Process(os.getpid())
         mem_info = process.memory_info()
         total_memory_usage = mem_info.rss
+        total_memory = psutil.virtual_memory().total
 
         wipe_screen()
         print(self)
-        print(f"Stack size: {len(self.stack):,}; Memory: {self.format_mem(total_memory_usage)}")
+        print(f"Stack size: {len(self.stack):,}; "
+              f"Memory: {self.format_mem(total_memory_usage)}/{self.format_mem(total_memory)} "
+              f"({total_memory_usage / total_memory:.2%})", flush=True)
 
     def comparison(self, i: int) -> int:
         return self.energies[self.data_index(i)] - self.TEST_ENERGIES[i]

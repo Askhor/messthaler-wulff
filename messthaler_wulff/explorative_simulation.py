@@ -1,6 +1,8 @@
 import logging
 import math
+import os
 
+import psutil
 from prettytable import PrettyTable
 
 from .abstract_crystal_store import TICrystal
@@ -109,11 +111,26 @@ class ExplorativeSimulation:
                     self.data_index(next_state.size)
                     self.process_state(next_state)
 
+    @staticmethod
+    def format_mem(m):
+        exponent = 0
+        while m >= 1000 and exponent < 3:
+            m /= 1000
+            exponent += 1
+
+        postfix = ["B", "KB", "MB", "GB"][exponent]
+
+        return f"{m:.1f} {postfix}"
+
     @debounce()
     def debug_print(self):
+        process = psutil.Process(os.getpid())
+        mem_info = process.memory_info()
+        total_memory_usage = mem_info.rss
+
         wipe_screen()
         print(self)
-        print(f"Stack size: {len(self.stack)}")
+        print(f"Stack size: {len(self.stack):,}; Memory: {self.format_mem(total_memory_usage)}")
 
     def comparison(self, i: int) -> int:
         return self.energies[self.data_index(i)] - self.TEST_ENERGIES[i]

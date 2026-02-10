@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "messthaler-wulff"
-version = "2026.1.19" # version
+version = "2026.2.2" # version
 authors = [
     { name = "Guenthner", email = "guenthner.jonathan@gmail.com" },
 ]
@@ -16,7 +16,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
-dependencies = ["matplotlib", "open3d", "psutil", "scipy", "sortedcontainers", "prettytable"]
+dependencies = ["matplotlib", "open3d", "psutil", "scipy", "sortedcontainers", "prettytable", "argcomplete"]
 keywords = ["Wulff", "Wulff Crystals"]
 
 [project.scripts]

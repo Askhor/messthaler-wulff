@@ -1,3 +1,5 @@
+# PYTHON_ARGCOMPLETE_OK
+
 import argparse
 import logging
 import math
@@ -6,6 +8,7 @@ import sys
 from abc import abstractmethod, ABC
 from argparse import ArgumentParser
 
+import argcomplete
 import numpy as np
 
 from .data import fcc_transform
@@ -39,7 +42,7 @@ def parse_lattice(lattice):
             return fcc_transform()
         case "triangular":
             return np.array([[1, 0.5],
-                             [0, math.sqrt(1-0.25)]])
+                             [0, math.sqrt(1 - 0.25)]])
 
     log.info(f"Unknown lattice name {lattice}, interpreting lattice as python code")
 
@@ -199,6 +202,7 @@ def main():
     for mode in Mode.modes:
         mode.create_parser(subparsers)
 
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
     log.setLevel(logging.DEBUG if args.verbose else logging.INFO)

@@ -112,6 +112,13 @@ class PriorityStack:
         self._assert_priority(key, priority)
         assert len(self) > 0
 
+    def increment(self, key: Key, delta: Priority, unset_on: Priority) -> None:
+        new_priority = self.get_priority(key) + delta
+        if new_priority == unset_on:
+            self.unset_priority(key)
+        else:
+            self.set_priority(key, new_priority)
+
     def unset_priority(self, key: Key) -> None:
         assert key in self
         self.size -= 1

@@ -18,6 +18,9 @@ class Graph(abc.ABC):
     def max_degree(self) -> int:
         pass
 
+    def degree(self, node: Key) -> int:
+        return len(self.neighbors(node))
+
     @abc.abstractmethod
     def neighbors(self, node: Key) -> Sequence[Key]:
         """The index-th neighbor of the node 'node'. The index may be
@@ -50,7 +53,6 @@ class UniformNeighborhood:
     def from_transform(cls, transform: np.ndarray) -> Self:
         ...
 
-
 class Lattice(Graph):
     """A graph given by a neighborhood and all possible translations of it"""
 
@@ -62,7 +64,7 @@ class Lattice(Graph):
 
     def intern(self, node: Vector) -> Key:
         """Get the canonical representation of a vector for this lattice"""
-        assert len(node) == self.neighborhood.dimension
+        assert len(node) == self.neighborhood.dimension, f"Vector {node} is not of dimension {self.neighborhood.dimension}"
 
         if node in self.keys:
             return self.keys[node]

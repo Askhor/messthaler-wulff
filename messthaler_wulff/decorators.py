@@ -1,4 +1,6 @@
 import logging
+from functools import wraps
+from typing import Callable
 
 log = logging.getLogger("messthaler_wulff")
 log.debug(f"Loading {__name__}")
@@ -18,12 +20,24 @@ def log_invocation(function):
 
 def hacky_instance_cache(cache_name):
     def deco(function):
+        @wraps(function)
         def impl(self, n: int):
             cache = getattr(self, cache_name)
             while len(cache) < n + 1:
                 cache.append(function(self, len(cache)))
 
             return cache[n]
+
+        return impl
+
+    return deco
+
+
+def map_output[A, B](mapper: Callable[...,A]) -> Callable[..., Callable[..., B]]:
+    def deco(function: Callable[..., A]):
+        @wraps(function)
+        def impl(*args, **kwargs):
+            return mapper(function(*args, **kwargs))
 
         return impl
 

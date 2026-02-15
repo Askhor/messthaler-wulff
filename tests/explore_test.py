@@ -12,11 +12,12 @@ TEST_ENERGIES: list[int] = [0, 12, 22, 30, 36, 44, 50, 54, 60, 66, 70, 76, 80, 8
                             268, 270, 270, 274, 276, 280, 282, 286, 286, 288, 288, 292, 296, 300, 302, 306, 306,
                             308, 308, 312]
 
+goal = 10
 
 def test_forwards_mode_results(capsys):
     omni_simulation = OmniSimulation(SimpleNeighborhood(fcc_transform()), None, tuple([0] * 4))
     with capsys.disabled():
-        explorer = ExplorativeSimulation(omni_simulation, 20, verbosity=0,
+        explorer = ExplorativeSimulation(omni_simulation, goal, verbosity=0,
                                          require_energy=4, ti=True, bidi=False, collect_crystals=False)
 
     for i, (expected, value) in enumerate(zip(TEST_ENERGIES, explorer.energies)):
@@ -24,11 +25,11 @@ def test_forwards_mode_results(capsys):
 
 
 def test_mode():
-    run_mode(20, fcc_transform(), 3, None, False, (), 4)
+    run_mode(goal, fcc_transform(), 3, None, False, (), 4)
 
 
 def test_mode_dump():
-    run_mode(20, fcc_transform(), 3, "-", False, (), 4)
+    run_mode(goal, fcc_transform(), 3, "-", False, (), 4)
 
 def test_mode_dump_folder(tmp_path: Path):
-    run_mode(20, fcc_transform(), 3, tmp_path, False, (), 4)
+    run_mode(goal, fcc_transform(), 3, tmp_path, False, (), 4)

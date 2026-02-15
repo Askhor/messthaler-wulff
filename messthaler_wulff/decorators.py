@@ -32,13 +32,8 @@ def hacky_instance_cache(cache_name):
 
     return deco
 
+def compose(a: Callable, b: Callable) -> Callable:
+    def impl(*args, **kwargs):
+        return a(b(*args, **kwargs))
 
-def map_output[A, B](mapper: Callable[...,A]) -> Callable[..., Callable[..., B]]:
-    def deco(function: Callable[..., A]):
-        @wraps(function)
-        def impl(*args, **kwargs):
-            return mapper(function(*args, **kwargs))
-
-        return impl
-
-    return deco
+    return impl

@@ -1,7 +1,8 @@
 import textwrap
+from functools import partial
 from typing import Optional, Iterable, Callable, Iterator
 
-from messthaler_wulff.decorators import map_output
+from messthaler_wulff.decorators import compose
 
 type Priority = int
 type Key = int
@@ -145,7 +146,7 @@ class PriorityStack:
 
         assert count == len(self)
 
-    @map_output(list)
+    @partial(compose, list)
     def invariant_failures(self) -> Iterable[str]:
         """Returns a list of strings of which invariants do
         not hold on this instance"""

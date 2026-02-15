@@ -1,39 +1,21 @@
 # PYTHON_ARGCOMPLETE_OK
 
-import argparse
+
 import logging
 import math
 import os
 import sys
-from abc import abstractmethod, ABC
 from argparse import ArgumentParser
 
 import argcomplete
+import mydefaults
 import numpy as np
 
 from .data import fcc_transform
-from .terminal_formatting import parse_color
 from .version import program_version
 
-log = logging.getLogger("messthaler_wulff")
-console = logging.StreamHandler()
-log.addHandler(console)
-log.setLevel(logging.DEBUG)
-console.setFormatter(
-    logging.Formatter(parse_color("{asctime} [ℂ3.{levelname:>5}ℂ.] ℂ4.{name}ℂ.: {message}"),
-                      style="{", datefmt="W%W %a %I:%M"))
-
-PROGRAM_NAME = "messthaler-wulff"
-DEFAULT_DATE_FORMAT = "%y/%b/%NAME"
-
-
-def command_entry_point():
-    try:
-        main()
-    except KeyboardInterrupt:
-        log.warning("Program was interrupted by user")
-    except EOFError:
-        log.warning("Program ran out of input")
+mydefaults.create_logger(__name__)
+log = logging.getLogger(__name__)
 
 
 def parse_lattice(lattice):
@@ -75,117 +57,76 @@ def parse_initial_crystal(initial_crystal, dimension):
     return value
 
 
-class Mode(ABC):
-    modes = []
+@mydefaults.sub_command
+def view(parser: ArgumentParser) -> mydefaults.MAGIC:
+    """Use Matplotlib to visualize a crystal in 3d"""
+    parser.add_argument("-o", "--orthogonal", action="store_true")
+    parser.add_argument("-a", "--axis", action="store_true")
+    parser.add_argument("-p", "--points", action="store_true")
+    parser.add_argument("-l", "--lines", type=float, default=None)
+    parser.add_argument("-c", "--convex-hull", action="store_true")
 
-    @classmethod
-    @abstractmethod
-    def create_parser(cls, obj) -> ArgumentParser:
-        parser = obj.add_parser(cls.name, description=cls.description, help=cls.description)
-        parser.set_defaults(mode=cls)
-        return parser
+    args = yield
 
-    @classmethod
-    @abstractmethod
-    def call(cls, args):
-        pass
+    if not (args.axis or args.points or args.lines):
+        log.error("At least one of the following must be present for view: -p, -l or -c")
+        sys.exit(1)
 
-
-@Mode.modes.append
-class View(Mode):
-    name = "view"
-    description = "Use Matplotlib to visualise a crystal in 3d"
-
-    @classmethod
-    def create_parser(cls, obj):
-        parser = super().create_parser(obj)
-        parser.add_argument("-o", "--orthogonal", action="store_true")
-        parser.add_argument("-a", "--axis", action="store_true")
-        parser.add_argument("-p", "--points", action="store_true")
-        parser.add_argument("-l", "--lines", type=float, default=None)
-        parser.add_argument("-c", "--convex-hull", action="store_true")
-        return parser
-
-    @classmethod
-    def call(cls, args):
-        if not (args.axis or args.points or args.lines):
-            log.error("At least one of the following must be present for view: -p, -l or -c")
-            sys.exit(1)
-
-        from .mode_view import run_mode
-        run_mode(use_orthogonal_projection=args.orthogonal,
-                 show_axes=args.axis,
-                 show_points=args.points,
-                 line_length=args.lines,
-                 show_convex_hull=args.convex_hull,
-                 initial=parse_initial_crystal(args.initial_crystal, args.dimension),
-                 lattice=args.lattice)
+    from .mode_view import run_mode
+    run_mode(use_orthogonal_projection=args.orthogonal,
+             show_axes=args.axis,
+             show_points=args.points,
+             line_length=args.lines,
+             show_convex_hull=args.convex_hull,
+             initial=parse_initial_crystal(args.initial_crystal, args.dimension),
+             lattice=args.lattice)
 
 
-@Mode.modes.append
-class Interactive(Mode):
-    name = "interactive"
-    description = "Explore a 2d slice of a crystal using commands"
+@mydefaults.sub_command
+def interactive(parser: ArgumentParser) -> mydefaults.MAGIC:
+    """Explore a 2d slice of a crystal using commands"""
 
-    @classmethod
-    def create_parser(cls, obj) -> ArgumentParser:
-        parser = super().create_parser(obj)
-        return parser
+    args = yield
 
-    @classmethod
-    def call(cls, args):
-        from .mode_interactive import run_mode
-        run_mode(goal=int(args.goal), dimension=args.dimension,
-                 lattice=args.lattice, windows_mode=args.windows,
-                 initial=parse_initial_crystal(args.initial_crystal, args.dimension))
+    from .mode_interactive import run_mode
+    run_mode(goal=int(args.goal), dimension=args.dimension,
+             lattice=args.lattice, windows_mode=args.windows,
+             initial=parse_initial_crystal(args.initial_crystal, args.dimension))
 
 
-@Mode.modes.append
-class Simulate(Mode):
-    name = "simulate"
-    description = "Simulate massive crystals in 3d (On Linux may require environment variable XDG_SESSION_TYPE=x11)"
-
-    @classmethod
-    def create_parser(cls, obj) -> ArgumentParser:
-        parser = super().create_parser(obj)
-        return parser
-
-    @classmethod
-    def call(cls, args):
-        os.environ["XDG_SESSION_TYPE"] = "x11"
-        from .mode_simulate import run_mode
-        run_mode(goal=args.goal, lattice=args.lattice)
+@mydefaults.sub_command
+def simulate(parser: ArgumentParser) -> mydefaults.MAGIC:
+    """Simulate massive crystals in 3d (On Linux may require environment variable XDG_SESSION_TYPE=x11)"""
+    args = yield
+    os.environ["XDG_SESSION_TYPE"] = "x11"
+    from .mode_simulate import run_mode
+    run_mode(goal=args.goal, lattice=args.lattice)
 
 
-@Mode.modes.append
-class Explore(Mode):
-    name = "explore"
-    description = "Explore the number of crystals and optimal energies"
+@mydefaults.sub_command
+def explore(parser: ArgumentParser) -> mydefaults.MAGIC:
+    """Explore the number of crystals and optimal energies"""
 
-    @classmethod
-    def create_parser(cls, obj) -> ArgumentParser:
-        parser = super().create_parser(obj)
-        parser.add_argument("-d", "--dump-crystals", default=None)
-        parser.add_argument("-r", "--require-energy", type=int, default=None)
-        parser.add_argument("--no-translations", action="store_true")
-        parser.add_argument("--no-bidi", action="store_true")
-        return parser
+    parser.add_argument("-d", "--dump-crystals", default=None)
+    parser.add_argument("-r", "--require-energy", type=int, default=None)
+    parser.add_argument("--no-translations", action="store_true")
+    parser.add_argument("--no-bidi", action="store_true")
 
-    @classmethod
-    def call(cls, args):
-        from .mode_explore import run_mode
-        run_mode(goal=args.goal, lattice=args.lattice,
-                 initial=parse_initial_crystal(args.initial_crystal, args.dimension),
-                 dimension=args.dimension, verbose=args.verbose, dump_crystals=args.dump_crystals,
-                 require_energy=args.require_energy, ti=not args.no_translations, bidi=not args.no_bidi)
+    args = yield
+
+    from .mode_explore import run_mode
+    run_mode(goal=args.goal, lattice=args.lattice,
+             initial=parse_initial_crystal(args.initial_crystal, args.dimension),
+             dimension=args.dimension, verbose=args.verbose, dump_crystals=args.dump_crystals,
+             require_energy=args.require_energy, ti=not args.no_translations, bidi=not args.no_bidi)
 
 
-def main():
-    parser = argparse.ArgumentParser(prog=PROGRAM_NAME,
-                                     description="Wudduwudduwudduwudduwudduwudduwudduwuddu")
-
-    parser.add_argument('-v', '--verbose', action='store_true', help="Show more output")
-    parser.add_argument("--version", action="version", version=f"%(prog)s {program_version}")
+@mydefaults.command(version=program_version)
+def messthaler_wulff(parser: ArgumentParser):
+    """Blazingly fast code for finding all crystals
+    (subsets of a graph) that can be constructed
+    using only transformations that locally minimize
+    surface energy."""
 
     parser.add_argument("--goal", help="The number of atoms to add initially or to go to (default: %(default)s)",
                         type=int,
@@ -196,13 +137,11 @@ def main():
     lattice_options.add_argument("--dimension", default="3", type=int, help="(default: %(default)s)")
     lattice_options.add_argument("--initial-crystal", default=None)
 
-    parser.add_argument("-w", "--windows", action="store_true")
-
     subparsers = parser.add_subparsers(title="Modes", description="Possible modes of operation", required=True)
-    for mode in Mode.modes:
-        mode.create_parser(subparsers)
+    mydefaults.add_sub_commands(subparsers)
 
     argcomplete.autocomplete(parser)
+
     args = parser.parse_args()
 
     log.setLevel(logging.DEBUG if args.verbose else logging.INFO)
@@ -210,4 +149,4 @@ def main():
     if not __debug__:
         log.info("Running in optimized mode")
 
-    args.mode.call(args)
+    mydefaults.run_sub_command(args)

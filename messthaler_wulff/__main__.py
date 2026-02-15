@@ -1,3 +1,3 @@
-import messthaler_wulff
+from messthaler_wulff import messthaler_wulff
 
-messthaler_wulff.command_entry_point()
+messthaler_wulff()

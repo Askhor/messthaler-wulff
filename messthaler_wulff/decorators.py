@@ -2,6 +2,9 @@ import logging
 from functools import wraps
 from typing import Callable
 
+from colorama.ansi import clear_screen
+from colorama import Cursor
+
 log = logging.getLogger("messthaler_wulff")
 log.debug(f"Loading {__name__}")
 
@@ -32,8 +35,13 @@ def hacky_instance_cache(cache_name):
 
     return deco
 
+
 def compose(a: Callable, b: Callable) -> Callable:
     def impl(*args, **kwargs):
         return a(b(*args, **kwargs))
 
     return impl
+
+
+def wipe_screen():
+    print(end=clear_screen(2) + clear_screen(3) + Cursor.POS(0, 0), flush=True)

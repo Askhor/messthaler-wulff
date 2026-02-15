@@ -1,12 +1,14 @@
-import json
 import random
 import shutil
 import time
 from collections import defaultdict
+from typing import Sequence
 
+import colorama.ansi
 import numpy as np
+from colorama import Cursor
 
-from messthaler_wulff.terminal_formatting import wipe_screen
+from messthaler_wulff.decorators import wipe_screen
 from .progress import ProgressBar
 
 
@@ -116,16 +118,6 @@ class EnergyTracker:
 
     def atoms(self):
         return self.atom2energy.keys()
-
-    def __str__(self):
-        return json.dumps({
-            "min_energy": self.min_energy,
-            "atom2energy": {
-                str(k): v for (k, v) in self.atom2energy.items()},
-            "energy_levels": {
-                k: v.json_obj() for (k, v) in self.energy_levels.items()
-            }
-        }, indent=4)
 
 
 class OmniSimulation:
@@ -392,7 +384,7 @@ class SimpleNeighborhood:
         if shape[0] != shape[1]:
             raise ValueError("I need a square matrix")
 
-        self.base_neighborhood = set()
+        self.base_neighborhood: set[Sequence[int]] = set()
 
         self.find_neighbors()
 

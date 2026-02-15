@@ -1,7 +1,4 @@
-import logging
-import math
-
-from data import *
+from messthaler_wulff.data import *
 
 log = logging.getLogger("messthaler_wulff")
 log.debug(f"Loading {__name__}")

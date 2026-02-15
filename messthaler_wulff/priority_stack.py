@@ -1,6 +1,6 @@
 import textwrap
 from functools import partial
-from typing import Optional, Iterable, Callable, Iterator
+from typing import Optional, Iterable, Iterator, Sequence
 
 from messthaler_wulff.decorators import compose
 
@@ -9,24 +9,24 @@ type Key = int
 type PriorityLevel = list[Key]
 
 
-class defaultlist[T]:
-    def __init__(self, default: Callable[..., T]):
-        self.default: Callable[..., T] = default
-        self.values: list[T] = list()
+class defaultlist:
+    def __init__(self, default: int):
+        self.default: int = default
+        self.values: list[int] = list()
 
     def _ensure_capacity(self, key: int):
         l = self.values
         while len(l) <= key:
-            l.append(self.default())
+            l.append(self.default)
 
     def __len__(self):
         return len(self.values)
 
-    def __getitem__(self, key: int) -> T:
+    def __getitem__(self, key: int) -> int:
         self._ensure_capacity(key)
         return self.values[key]
 
-    def __setitem__(self, key: int, value: T) -> None:
+    def __setitem__(self, key: int, value: int) -> None:
         self._ensure_capacity(key)
         self.values[key] = value
 
@@ -40,11 +40,11 @@ class PriorityStack:
     def __init__(self, priority_count) -> None:
         self.min_priority: Optional[Priority] = None
         self.priority_levels: list[PriorityLevel] = [list() for _ in range(priority_count)]
-        self.priorities: defaultlist[Optional[Priority]] = defaultlist(lambda: None)
-        self.indices: defaultlist[Optional[int]] = defaultlist(lambda: None)
+        self.priorities: defaultlist = defaultlist(-1)
+        self.indices: defaultlist = defaultlist(-1)
         self.size: int = 0
 
-    def minimums(self) -> Iterable[Priority]:
+    def minimums(self) -> Sequence[Priority]:
         assert self.min_priority is not None
         return self.priority_levels[self.min_priority]
 
@@ -53,7 +53,7 @@ class PriorityStack:
 
     def __contains__(self, key: Key) -> bool:
         assert key >= 0
-        return self.priorities[key] is not None
+        return self.priorities[key] != -1
 
     def get_priority(self, key: Key) -> Priority:
         assert key in self, f"Priority for {key} is {self.priorities[key]}"
@@ -64,7 +64,7 @@ class PriorityStack:
         assert index is not None
         assert 0 <= index < len(level), f"Failed 0 <= {index} < {len(level)}"
         assert level[index] == key
-        self.indices[key] = None
+        self.indices[key] = -1
 
         if index == len(level) - 1:
             level.pop()
@@ -126,7 +126,7 @@ class PriorityStack:
         priority = self.priorities[key]
         level = self.priority_levels[priority]
         self._remove_from_level(level, key)
-        self.priorities[key] = None
+        self.priorities[key] = -1
 
         self._adjust_min_priority()
 
@@ -134,6 +134,7 @@ class PriorityStack:
         if len(self) == 0:
             self.min_priority = None
         else:
+            assert self.min_priority is not None
             while len(self.priority_levels[self.min_priority]) <= 0:
                 self.min_priority += 1
 
@@ -155,11 +156,11 @@ class PriorityStack:
             priority = self.priorities[key]
             index = self.indices[key]
 
-            if (priority is None) != (index is None):
+            if (priority == -1) != (index == -1):
                 yield f"Priority and index are not in sync for {key}"
                 continue
 
-            if priority is None: continue
+            if priority == -1: continue
             if priority >= len(self.priority_levels):
                 yield (f"Priority {priority} is "
                        f"too large for maximum "

@@ -51,7 +51,7 @@ class UniformNeighborhood:
 
     @classmethod
     def from_transform(cls, transform: np.ndarray) -> Self:
-        ...
+        raise NotImplementedError()
 
 class Lattice(Graph):
     """A graph given by a neighborhood and all possible translations of it"""
@@ -60,7 +60,8 @@ class Lattice(Graph):
         self.neighborhood = neighborhood
         self.keys: dict[Vector, Key] = {neighborhood.zero: Graph.ZERO}
         self.values: list[Vector] = [neighborhood.zero]
-        self._neighbors: list[Sequence[Key]] = []
+        self._neighbors: list[tuple[Key]] = []
+
 
     def intern(self, node: Vector) -> Key:
         """Get the canonical representation of a vector for this lattice"""

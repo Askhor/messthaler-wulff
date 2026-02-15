@@ -4,7 +4,7 @@ import random
 
 import open3d as o3d
 
-from .additive_simulation import SimpleNeighborhood, OmniSimulation
+from ._additive_simulation import SimpleNeighborhood, OmniSimulation
 from .data import *
 from .progress import ProgressBar
 

@@ -1,7 +1,8 @@
 import logging
+from typing import Any
 
+from messthaler_wulff._additive_simulation import OmniSimulation
 from messthaler_wulff.abstract_crystal_store import DumbCrystal
-from messthaler_wulff.additive_simulation import OmniSimulation
 
 log = logging.getLogger("messthaler_wulff")
 
@@ -15,7 +16,7 @@ class AdvancedSimulation:
         self.initial_atom_count = omni.atoms
         self.current_state = self.initial_state
 
-        self.energies = {}
+        self.energies: dict[Any, int] = {}
 
     @staticmethod
     def cached(cache_name):
@@ -56,7 +57,7 @@ class AdvancedSimulation:
         else:
             self.current_state = self.current_state.remove_atom(atom)
 
-    def goto(self, state: int):
+    def goto(self, state):
         if state == self.current_state:
             return
 

@@ -17,7 +17,7 @@ action_strategy = st.lists(st.one_of(
 
 @given(action_strategy)
 def test_against_reference(actions: list[tuple[str, int, int]]):
-    reference = {}
+    reference: dict[int, int] = {}
     p = PriorityStack(priority_count)
 
     def reference_matches():
@@ -41,7 +41,7 @@ def test_against_reference(actions: list[tuple[str, int, int]]):
 
 @given(action_strategy)
 def test_minimums(actions: list[tuple[str, int, int]]):
-    reference = {}
+    reference: dict[int, int] = {}
     p = PriorityStack(priority_count)
 
     def check_minimums():

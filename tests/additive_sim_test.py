@@ -26,7 +26,7 @@ def test_random(graph: Graph, steps: int):
         if sim.size == 0:
             mode = Mode.FORWARDS
         node = random.choice(sim.next(mode))
-        sim.move_to_boundary(node, mode)
+        sim.toggle(node)
         sim.test_invariants()
 
 # from messthaler_wulff._additive_simulation import OmniSimulation

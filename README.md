@@ -47,8 +47,9 @@ an additive simulation instance is $S_A = (\xi_C, B_0, B_1)$ where
 $\xi_C$ is the energy of the current crystal and $B_i$ are the
 boundaries, defined as follows:
 $$
-B_i = \{ n \in C \mid l_n^{1-i} > 0 \}
+B_i = \{ n \in C_i \mid l_n^{1-i} > 0 \}
 $$
+with $C_0=C$ and $C_1=G \setminus C$
 
 The boundaries are represented by `PriorityStack` instances and support
 the following operations:

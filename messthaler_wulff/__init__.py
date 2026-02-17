@@ -12,6 +12,7 @@ import mydefaults
 import numpy as np
 
 from .data import fcc_transform
+from .parsing import parse_crystal
 from .version import program_version
 
 mydefaults.create_logger(__name__)
@@ -43,7 +44,7 @@ def parse_initial_crystal(initial_crystal, dimension):
     if initial_crystal == "-":
         initial_crystal = input("Input initial crystal: ")
 
-    value = eval(initial_crystal)
+    value = parse_crystal(initial_crystal)
     log.info(f"Initial crystal has been set to {value}")
 
     for i in range(len(value)):
@@ -90,7 +91,7 @@ def interactive(parser: ArgumentParser) -> mydefaults.MAGIC:
 
     from .mode_interactive import run_mode
     run_mode(goal=int(args.goal), dimension=args.dimension,
-             lattice=args.lattice, windows_mode=args.windows,
+             lattice=args.lattice, windows_mode=False,
              initial=parse_initial_crystal(args.initial_crystal, args.dimension))
 
 

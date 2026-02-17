@@ -17,7 +17,7 @@ TEST_ENERGIES_BIDI: list[int] = [0, 12, 22, 30, 36, 44, 48, 54, 60, 66, 70, 76, 
                                  124, 126, 130, 134, 138, 142, 144, 148, 150, 154, 158, 160, 164, 166, 168, 168, 172,
                                  176, ]
 
-goal = 12
+goal = 10
 
 
 def test_forwards_mode_results(capsys):

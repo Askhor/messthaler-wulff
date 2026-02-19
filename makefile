@@ -33,3 +33,6 @@ latex/README.tex: README.md latex/packages.tex
 
 latex/README.pdf: latex/README.tex
 	cd latex && texfot pdflatex -synctex=1 -interaction=nonstopmode "README.tex"
+
+show_documentation:
+	$(py) -m pydoc -b

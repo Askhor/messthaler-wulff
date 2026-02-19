@@ -34,5 +34,8 @@ latex/README.tex: README.md latex/packages.tex
 latex/README.pdf: latex/README.tex
 	cd latex && texfot pdflatex -synctex=1 -interaction=nonstopmode "README.tex"
 
-make_documentation:
+documentation:
 	$(py) -m pdoc -o documentation --math --search messthaler_wulff/
+
+show_documentation:
+	.venv/bin/python -m pdoc messthaler_wulff/ --search --math

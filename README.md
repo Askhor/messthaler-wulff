@@ -10,69 +10,108 @@ surface energy.
 
 ## The Problem
 
-Let $G$ be some graph and $C_0 \subset G$ a crystal.
-Furthermore let $\eta: G \rightarrow \wp(G)$ denote the neighbors
-of a given node and $C_1 \coloneq G \setminus C_0$.
-Then we can define the surface energy of the crystal $C_0$
-as
+Let $(G, E)$ be some graph and $\eta: G \rightarrow \wp(G)$ denote the neighbors
+of a given node, defined as
 $$
-\xi_{C_0} \coloneq \sum_{n \in C_0} l_n^1
-$$
-where $l_n^i$ denotes the forwards/backwards loneliness of the node $n$ and is
-itself defined as
-$$
-l_n^i \coloneq \# \{ n_0 \in \eta(n) \mid n_0 \in C_i \}
+  \eta(n) \coloneq \{ n_0 \in G \mid \{n_0, n\} \in E \}
 $$
 
-The idea now is to find optimal $\xi_{C_0}$ by doing locally
-minimizing transformations. We call a node $n$ optimal
-in forwards mode if for the specific $C_0$ there is no node
-$n_0$ such that $l_{n_0}^1 < l_n^1$. The same definition can
-be applied to backwards mode, for this however we use
-$l_n^0$.
+Now we can define a crystal as $c \subset G$ with $c$ finite.
+This allows us to define its complement $\bar c \coloneq G \setminus c$ and the set of all crystals
+$C \coloneq \{ c \subset G \mid c \text{ finite} \}$.
 
-A locally optimal addition is now simply a node with optimal $l_n^1$
-and a locally optimal removal is a node with optimal $l_n^0$.
-
-Our goal in this project is to explore what crystals we can construct
-by only using such locally optimal transformations.
-
-## The Additive Simulation
-
-This class encapsulates a current state representing a crystal
-and methods to find out what locally optimal transformations
-can be applied or to apply said transformations. It is optimized
-to be able to support $O(1)$ operations. A simplified definition of
-an additive simulation instance is $S_A = (\xi_C, B_0, B_1)$ where
-$\xi_{C_0}$ is the energy of the current crystal and $B_i$ are the
-boundaries, defined as follows:
+Now we can define the surface energy of the crystal $c$
+(or arbitrary subsets of $G$) as
 $$
-B_i = \{ n \in C_i \mid l_n^{1-i} > 0 \}
+  \xi_{c} \coloneq \sum_{n \in c} f_{\bar c}(n)
+$$
+where $f_M(n)$ denotes the \textquote{friendliness} of the node $n$ or 
+how many friends it has defined as
+$$
+  f_M(n) \coloneq \# \{ n_0 \in \eta(n) \mid n_0 \in M \}
 $$
 
-The boundaries are represented by `PriorityStack` instances and support
-the following operations:
+The idea now is to find crystals $c$ such that $\frac{\xi_{c}}{\# c}$
+is optimal.
 
-- Getting the loneliness for a node
-- Setting the loneliness for a node
-- Unsetting the loneliness for a node, effectively removing it from
-  the boundary
-- Getting the nodes that have minimal loneliness
+## The Crystal Graph
 
-In its essence `PriorityStack` is an implementation of a priority queue
-optimized for this specific use-case.
+We can impose a graph structure on $C$ with the edges
+$$
+  T \coloneq \{ \{ c, c \setminus \{n\} \} \mid c \in C \text{ and } n \in c \}
+$$
+we call these the transformations and $(C,T)$ the transformation graph.
 
-$S_A$ now basically only has to support one operation: Moving
-a node from one boundary to the other.
+If we want to discover optimal crystals, then we must efficiently walk this
+graph. Since this graph is very dense and very large, we must first
+discuss some optimizations:
 
-Let $n$ be the affected node and $m$ the mode[^1]. If $m=1$
-the energy becomes
-$$\xi_{C_0}' = \xi_{C_0} + l_n^1 - l_n^0$$
-$$=\xi_{C_0} + l_n^1 - (\#\eta(n)-l_n^1)$$
-$$=\xi_{C_0} + 2l_n^1 - \#\eta(n)$$
-Since backwards and forwards are inverse for $m=0$ the energy must be
-$$\xi_{C_0}' = \xi_{C_0} - l_n^1 + l_n^0$$
-$$=\xi_{C_0} + l_n^0 - (\#\eta(n)-l_n^0)$$
-$$=\xi_{C_0} + 2l_n^0 - \#\eta(n)$$
+- [$O(1)$ transformations](#efficient-transformations)
+- [Pruning bad transformations](#pruning-bad-transformations)
+- [Exploiting Symmetries](#exploiting-symmetries)
+- [Pruning bad crystals](#pruning-bad-crystals)
 
-[^1]: This is 0 for backwards and 1 for forwards
+## Efficient Transformations
+
+In the code this is achieved using the stateful class `AdditiveSimulation` that walks
+along the transformation graph. This class keeps track of two
+important properties, namely $f_c(n)$ and $m(n)$ for (almost) all
+$n \in G$, in practice $f_c(n)$ will default to $0$ and $m(n)$ to $1$.
+$m(n) \in \{0,1\}$ is called the mode of the node $n$ and is defined as
+$$
+m(n) \coloneq
+\begin{cases}
+0 & \text{if } n \in c \\
+1 & \text{if } n \in \bar c
+\end{cases}
+$$
+We call $1$ the forwards mode and $0$ the backwards mode, as nodes that we
+might add to our current crystal will be in $\bar c$ and nodes we might 
+remove are in $c$.
+
+We can also define the mode sign of a node as
+$s(n) \coloneq 2 \cdot m(n) - 1$.
+
+Now let $n$ be the node that defines our transformation, we can update
+$m(n)$ like so $m'(n) = 1 - m(n)$. The friendliness $f_c(n)$ does not change.
+Instead, the friendliness of each neighbor must be updated. So for each
+$n_0 \in \eta(n)$: $f_c'(n_0) = f_c(n_0) + s(n)$. We can also define an
+update rule for the energy
+$\xi_c' = \xi_c + s(n) \cdot f_{\bar c}(n) - s(n) \cdot f_{c}(n)  \text{ todo}$.
+**TODO: Explanation**
+
+## Pruning Bad Transformations
+
+Most transformations are pretty bad, for example in a solid crystal,
+removing a node in the center will only increase the energy, to combat this
+we will only consider locally optimal transformations. For this we 
+define $\delta(n) \coloneq \xi_{c'} - \xi_{c} = s(n) \cdot f_{\bar c}(n) \text{ todo}$,
+the energy difference for this transformation.
+
+Now we look for nodes $n$ such that no nodes $n_0$ exist with $m(n_0) = m(n)$
+and $\delta(n_0) < \delta(n)$. These are the locally optimal
+transformations.
+
+This is achieved in $O(1)$ using the `PriorityStack` class, a priority queue
+optimized for this specific use case. We have two instances for our
+graph walking `AdditiveSimulation`, one for backwards mode and
+one for forwards mode. Depending on which mode is then queried, we
+query the appropriate instance for all nodes that have minimal $\delta(n)$.
+
+## Exploiting Symmetries
+
+Let $H$ be a group action on $G$. This is only useful to us 
+if the action commutes with the neighborhood function as in
+$\eta(h(n)) = h(\eta(n))$ for all $h \in H$. This not only means
+that the energy is also invariant under $H$, but also
+the possible next locally optimal transformations,
+meaning we can run our simulation only on canonical
+representatives of each equivalence class of $G/H$.
+
+We call a function $\chi_H: G \to H$ a characteristic for the
+group action $H$ if for all $h \in H$ and $g \in G$
+$$\chi_H(h(g)) = h \circ \chi_H(g)$$
+
+## Pruning Bad Crystals
+
+---

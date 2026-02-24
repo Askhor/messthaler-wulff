@@ -9,4 +9,5 @@ results
 *.gz
 *.log
 *.aux
+*.pretex
 .hypothesis

@@ -28,8 +28,12 @@ reload: upload
 	pipx upgrade $(program-name)
 	$(program-name) --version
 
-latex/README.tex: README.md latex/packages.tex
-	pandoc -f markdown -t latex --standalone README.md -o latex/README.tex -H latex/packages.tex
+latex/README.pretex: README.md latex/README.sed
+	cat README.md | sed -f latex/README.sed > latex/README.pretex
+
+latex/README.tex: latex/README.pretex latex/packages.tex
+	pandoc -f markdown -t latex --standalone latex/README.pretex -o latex/README.tex -H latex/packages.tex
+
 
 latex/README.pdf: latex/README.tex
 	cd latex && texfot pdflatex -synctex=1 -interaction=nonstopmode "README.tex"

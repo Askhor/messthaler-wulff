@@ -9,7 +9,7 @@ type Key = int
 type Vector = Sequence[int]
 
 
-class Graph(abc.ABC):
+class Graph[T](abc.ABC):
     """Represent an abstract graph. Can be subclassed to create finite graphs, lattices, etc."""
     ZERO = 0
 
@@ -23,8 +23,14 @@ class Graph(abc.ABC):
 
     @abc.abstractmethod
     def neighbors(self, node: Key) -> Sequence[Key]:
-        """The index-th neighbor of the node 'node'. The index may be
-        at most one less than what 'degree' returns for this node"""
+        pass
+
+    @abc.abstractmethod
+    def intern(self, rep: T) -> Key:
+        pass
+
+    @abc.abstractmethod
+    def repr(self, node: Key) -> T:
         pass
 
 
@@ -53,7 +59,7 @@ class UniformNeighborhood:
     def from_transform(cls, transform: np.ndarray) -> Self:
         raise NotImplementedError()
 
-class Lattice(Graph):
+class Lattice(Graph[Vector]):
     """A graph given by a neighborhood and all possible translations of it"""
 
     def __init__(self, neighborhood: UniformNeighborhood) -> None:
@@ -74,6 +80,11 @@ class Lattice(Graph):
         self.values.append(node)
         self.keys[node] = key
         return key
+
+    def repr(self, node: Key) -> Vector:
+        assert isinstance(node, int)
+        assert self.exists(node)
+        return self.values[node]
 
     def exists(self, node: Key) -> bool:
         return node < len(self.values)

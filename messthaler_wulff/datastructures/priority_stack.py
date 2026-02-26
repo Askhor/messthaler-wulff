@@ -1,6 +1,6 @@
 import textwrap
 from functools import partial
-from typing import Optional, Iterable, Iterator, Sequence
+from typing import Optional, Iterable, Sequence
 
 from messthaler_wulff.decorators import compose
 
@@ -40,9 +40,9 @@ class PriorityStack:
     def __init__(self, priority_count) -> None:
         self.min_priority: Optional[Priority] = None
         self.priority_levels: list[PriorityLevel] = [list() for _ in range(priority_count)]
-        self.priorities: defaultlist = defaultlist(-1)
         self.indices: defaultlist = defaultlist(-1)
         self.size: int = 0
+        # self.priorities: defaultlist = defaultlist(-1)
 
     def minimums(self) -> Sequence[Priority]:
         assert self.min_priority is not None
@@ -53,43 +53,43 @@ class PriorityStack:
 
     def __contains__(self, key: Key) -> bool:
         assert key >= 0
-        return self.priorities[key] != -1
+        return self.indices[key] != -1
 
-    def get_priority(self, key: Key) -> Priority:
-        assert key in self, f"Priority for {key} is {self.priorities[key]}"
-        return self.priorities[key]
+    # def get_priority(self, key: Key) -> Priority:
+    #     assert key in self, f"Priority for {key} is {self.priorities[key]}"
+    #     return self.priorities[key]
 
-    def _remove_from_level(self, level: PriorityLevel, key: Key):
-        index = self.indices[key]
-        assert index is not None
-        assert 0 <= index < len(level), f"Failed 0 <= {index} < {len(level)}"
-        assert level[index] == key
-        self.indices[key] = -1
-
-        if index == len(level) - 1:
-            level.pop()
-        else:
-            move = level.pop()
-            level[index] = move
-            self.indices[move] = index
-
-    def _add_to_level(self, level: PriorityLevel, key: Key) -> None:
-        self.indices[key] = len(level)
-        level.append(key)
-
-    def _assert_priority(self, key: Key, priority: Priority) -> None:
-        actual = self.get_priority(key)
-        assert actual == priority, f"Expected priority {priority}, got {actual} instead"
-        assert self.priority_levels[actual][self.indices[key]] == key
-
-    def _remove_priority_entry(self, key: Key, priority: Priority) -> None:
-        level = self.priority_levels[priority]
-        self._remove_from_level(level, key)
-
-    def _add_priority_entry(self, key: Key, priority: Priority) -> None:
-        level = self.priority_levels[priority]
-        self._add_to_level(level, key)
-
+    # def _remove_from_level(self, level: PriorityLevel, key: Key):
+    #     index = self.indices[key]
+    #     assert index is not None
+    #     assert 0 <= index < len(level), f"Failed 0 <= {index} < {len(level)}"
+    #     assert level[index] == key
+    #     self.indices[key] = -1
+    #
+    #     if index == len(level) - 1:
+    #         level.pop()
+    #     else:
+    #         move = level.pop()
+    #         level[index] = move
+    #         self.indices[move] = index
+    #
+    # def _add_to_level(self, level: PriorityLevel, key: Key) -> None:
+    #     self.indices[key] = len(level)
+    #     level.append(key)
+    #
+    # def _assert_priority(self, key: Key, priority: Priority) -> None:
+    #     actual = self.get_priority(key)
+    #     assert actual == priority, f"Expected priority {priority}, got {actual} instead"
+    #     assert self.priority_levels[actual][self.indices[key]] == key
+    #
+    # def _remove_priority_entry(self, key: Key, priority: Priority) -> None:
+    #     level = self.priority_levels[priority]
+    #     self._remove_from_level(level, key)
+    #
+    # def _add_priority_entry(self, key: Key, priority: Priority) -> None:
+    #     level = self.priority_levels[priority]
+    #     self._add_to_level(level, key)
+    #
     def set_priority(self, key: Key, priority: Priority) -> None:
         assert priority < len(self.priority_levels)
         if self.min_priority is None or priority < self.min_priority:
@@ -113,13 +113,13 @@ class PriorityStack:
         self._assert_priority(key, priority)
         assert len(self) > 0
 
-    def increment(self, key: Key, delta: Priority, unset_on: Priority) -> None:
-        new_priority = self.get_priority(key) + delta
-        if new_priority == unset_on:
-            self.unset_priority(key)
-        else:
-            self.set_priority(key, new_priority)
-
+    # def increment(self, key: Key, delta: Priority, unset_on: Priority) -> None:
+    #     new_priority = self.get_priority(key) + delta
+    #     if new_priority == unset_on:
+    #         self.unset_priority(key)
+    #     else:
+    #         self.set_priority(key, new_priority)
+    #
     def unset_priority(self, key: Key) -> None:
         assert key in self
         self.size -= 1
@@ -130,23 +130,23 @@ class PriorityStack:
 
         self._adjust_min_priority()
 
-    def _adjust_min_priority(self) -> None:
-        if len(self) == 0:
-            self.min_priority = None
-        else:
-            assert self.min_priority is not None
-            while len(self.priority_levels[self.min_priority]) <= 0:
-                self.min_priority += 1
-
-    def __iter__(self) -> Iterator[Key]:
-        count = 0
-
-        for level in self.priority_levels:
-            count += len(level)
-            yield from level
-
-        assert count == len(self)
-
+    # def _adjust_min_priority(self) -> None:
+    #     if len(self) == 0:
+    #         self.min_priority = None
+    #     else:
+    #         assert self.min_priority is not None
+    #         while len(self.priority_levels[self.min_priority]) <= 0:
+    #             self.min_priority += 1
+    #
+    # def __iter__(self) -> Iterator[Key]:
+    #     count = 0
+    #
+    #     for level in self.priority_levels:
+    #         count += len(level)
+    #         yield from level
+    #
+    #     assert count == len(self)
+    #
     @partial(compose, list)
     def invariant_failures(self) -> Iterable[str]:
         """Returns a list of strings of which invariants do

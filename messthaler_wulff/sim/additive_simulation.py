@@ -1,4 +1,7 @@
+import logging
+import random
 import shutil
+import sys
 import textwrap
 from enum import Enum
 from functools import partial
@@ -6,10 +9,11 @@ from typing import Iterable, Sequence, Optional
 
 from colorama import Fore, Back
 
-from messthaler_wulff.common_lattices import CommonLattice
 from messthaler_wulff.decorators import compose
 from messthaler_wulff.graph import Graph, Lattice
-from messthaler_wulff.priority_stack import PriorityStack
+from messthaler_wulff.datastructures.priority_stack import PriorityStack
+
+log = logging.getLogger("messthaler_wulff")
 
 
 class Mode(Enum):
@@ -19,7 +23,16 @@ class Mode(Enum):
     def __init__(self, index: int, sign: int):
         super().__init__()
         self.index = index
+        """The mathematical equivalent of this value. Forwards
+        is assigned 1 in the theory and backwards 0."""
         self.sign = sign
+        """1 for forwards and -1 for backwards"""
+
+    def __str__(self):
+        return self.name[0]
+
+    def __repr__(self):
+        return str(self)
 
 
 class AdditiveSimulation:
@@ -28,8 +41,14 @@ class AdditiveSimulation:
 
     def __init__(self, graph: Graph) -> None:
         self.energy = 0
+        r"""Current energy of the crystal defined by
+        $$
+            \xi_{C_0} = \sum_{n \in C_0} l_n^1
+        $$"""
         self.size = 0
+        """The number of atoms in the crystal"""
         self.graph = graph
+        """The underlying graph used for the simulation"""
 
         self.boundaries = [PriorityStack(graph.max_degree + 1),
                            PriorityStack(graph.max_degree + 1)]
@@ -53,6 +72,9 @@ class AdditiveSimulation:
         return self.boundaries[1 - mode.index]
 
     def calculate_loneliness(self, node: int, mode: Mode) -> int:
+        r"""Calculates the loneliness according to $l_n^i = \\# \\{ n_0 \in \eta(n) \mid n_0 \in C_i \\}$,
+        where `node` is $n$ and `mode.index` is $i$.
+        """
         energy = self.graph.degree(node)
         reverse_boundary = self.reverse_boundary(mode)
 
@@ -62,7 +84,24 @@ class AdditiveSimulation:
 
         return energy
 
+    def toggle(self, node: int) -> None:
+        """Calls move_to_boundary with the appropriate mode, resulting in a toggle between boundaries."""
+        mode: Mode
+        if node in self.boundary(Mode.FORWARDS):
+            mode = Mode.FORWARDS
+        else:
+            mode = Mode.BACKWARDS
+
+        self.move_to_boundary(node, mode)
+
+    def energy_delta(self, node: int, mode: Mode) -> int:
+        """Computes the energy delta between the current state and the current state but with `node`
+        moved to the other boundary"""
+        loneliness = self.boundary(mode).get_priority(node)
+        return 2 * loneliness - self.graph.degree(node)
+
     def move_to_boundary(self, node: int, mode: Mode) -> None:
+        """Updates this and neighboring nodes to have appropriate loneliness-scores after the move"""
         self.size += mode.sign
         assert self.size >= 0
 
@@ -75,7 +114,7 @@ class AdditiveSimulation:
         old_loneliness = mode_boundary.get_priority(node)
         neighbors = self.graph.neighbors(node)
         degree = len(neighbors)
-        self.energy += 2 * old_loneliness - degree
+        self.energy += self.energy_delta(node, mode)
 
         mode_boundary.unset_priority(node)
         reverse_boundary.set_priority(node, degree - old_loneliness)
@@ -89,7 +128,30 @@ class AdditiveSimulation:
                 mode_boundary.set_priority(n, self.graph.degree(n) - 1)
 
     def next(self, mode: Mode) -> Sequence[int]:
+        """Returns a sequence of nodes that represent locally optimal transformations"""
         return self.boundary(mode).minimums()
+
+    def initialise(self, atoms: list[int]):
+        """Can only be called if the simulation is empty. Will fill it with the specified atoms"""
+        assert self.size == 0
+
+        dups = list(duplicates(atoms))
+
+        if len(dups) > 0:
+            log.error(f"Initialising additive simulation failed because input data contains duplicate coordinate(s):\n"
+                      f"{list(map(lambda x: self.graph.repr(x), dups))}")
+            sys.exit(1)
+
+        for a in atoms:
+            self.boundary(Mode.FORWARDS).set_priority(a, self.graph.degree(a))
+            assert a in self.boundary(Mode.FORWARDS)
+
+        for a in atoms:
+            assert a not in self.boundary(Mode.BACKWARDS)
+            self.toggle(a)
+            if a not in self.boundary(Mode.BACKWARDS):
+                print(a)
+                visualise_slice(self, lambda x, y: (x, y, 0))
 
     @partial(compose, list)
     def invariant_failures(self) -> Iterable[str]:
@@ -118,6 +180,7 @@ class AdditiveSimulation:
                     continue
 
     def test_invariants(self) -> None:
+        """Test the invariants checked by `invariant_failures` and raise a `RuntimeError` if any are violated"""
         failures = self.invariant_failures()
         if len(failures) == 0: return
 
@@ -128,6 +191,20 @@ class AdditiveSimulation:
                            f"{self.size}\n"
                            f"{list(self.boundary(Mode.BACKWARDS))}\n"
                            f"{list(self.boundary(Mode.FORWARDS))}")
+
+
+def duplicates[T](values: Iterable[T]) -> Iterable[T]:
+    """Returns an iterable of all elements of `values` that are duplicates"""
+    seen = set()
+    dups = set()
+
+    for value in values:
+        if value in seen:
+            if value not in dups:
+                yield value
+                dups.add(value)
+        else:
+            seen.add(value)
 
 
 def visualise_slice(sim: AdditiveSimulation, atomiser=lambda x, y: (x, y), crosshair=False, view_energies=False):
@@ -175,45 +252,10 @@ def visualise_slice(sim: AdditiveSimulation, atomiser=lambda x, y: (x, y), cross
     print()
 
 
-from messthaler_wulff._additive_simulation import OmniSimulation
-
-from timeit import timeit
-import tqdm
-import random
-
-
-def perf(func, number=1000_000):
-    return timeit(func, number=number) / number * 1000 * 1000
-
-
-def main():
-    graph = Lattice(CommonLattice.fcc.value)
-    sim = OmniSimulation(
-        lambda x: graph.neighbors(x), lambda: graph.max_degree, 0
-    )
-    sim = AdditiveSimulation(graph)
-
-    goal = 100_000
-    if isinstance(sim, AdditiveSimulation):
-        # 8 or 9 sec
-        # 6 or 8 sec opt
-        for i in tqdm.tqdm(range(goal)):
-            node = random.choice(sim.next(Mode.FORWARDS))
-            sim.move_to_boundary(node, Mode.FORWARDS)
-    else:
-        # 7 or 8 sec
-        # 6 sec opt
-        for i in tqdm.tqdm(range(goal)):
-            sim.add_atom(random.randrange)
-
-    # for i in range(1000):
-    #     print(end=colorama.ansi.clear_screen(3))
-    #     print(end=Cursor.POS(0,0))
-    # node = random.choice(sim.next(Mode.FORWARDS))
-    # sim.move_to_boundary(node, Mode.FORWARDS)
-    # visualise_slice(sim)
-    # input()
-
-
-if __name__ == "__main__":
-    main()
+def fill(sim: AdditiveSimulation):
+    """Add atoms to the simulation until the energy would increase"""
+    while True:
+        node = random.choice(sim.next(Mode.FORWARDS))
+        if sim.energy_delta(node, Mode.FORWARDS) > 0:
+            break
+        sim.toggle(node)

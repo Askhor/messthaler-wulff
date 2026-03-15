@@ -1,6 +1,6 @@
 from enum import Enum
 
-from messthaler_wulff.graph import UniformNeighborhood
+from messthaler_wulff.datastructures.lattice import UniformNeighborhood
 
 
 class CommonLattice(Enum):

@@ -15,7 +15,7 @@ def log_invocation(function):
         parameter_string = f"{function.__name__}({", ".join(parameters)})"
         log.debug(f"Calling {parameter_string}")
         result = function(*args, **kwargs)
-        log.debug(f"Finished {parameter_string}")
+        log.debug(f"Finished {parameter_string}={result}")
         return result
 
     return impl

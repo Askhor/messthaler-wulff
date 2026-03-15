@@ -8,6 +8,8 @@ s/>.*COMMENT.*//
 ## General Unicode Characters
 s/:=/\\coloneq/g
 s/→/\\rightarrow/g
+s/≤/\\le/g
+s/≥/\\ge/g
 s/·/\\cdot/g
 
 ## Greek Letter definitions

@@ -3,7 +3,7 @@ from pathlib import Path
 from messthaler_wulff import fcc_transform
 from messthaler_wulff._additive_simulation import OmniSimulation, SimpleNeighborhood
 from messthaler_wulff._explorative_simulation import ExplorativeSimulation
-from messthaler_wulff.mode_explore import run_mode
+from messthaler_wulff.modes.mode_explore import run_mode
 
 TEST_ENERGIES_FORWARDS: list[int] = [0, 12, 22, 30, 36, 44, 50, 54, 60, 66, 70, 76, 80, 84, 88, 92, 96, 100, 104, 108,
                                      112, 116, 120, 124, 126, 130, 134, 138, 142, 144, 148, 150, 154, 158, 160, 164,

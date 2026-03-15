@@ -1,8 +1,8 @@
 import logging
 import random
 
-from ._additive_simulation import SimpleNeighborhood, OmniSimulation
-from .progress import ProgressBar
+from messthaler_wulff._additive_simulation import SimpleNeighborhood, OmniSimulation
+from messthaler_wulff.progress import ProgressBar
 
 log = logging.getLogger("messthaler_wulff")
 log.debug(f"Loading {__name__}")

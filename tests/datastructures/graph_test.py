@@ -1,8 +1,9 @@
 from hypothesis import strategies as st, given
 
-from messthaler_wulff.common_lattices import CommonLattice
-from messthaler_wulff.graph import UniformNeighborhood, Lattice, Graph
-from messthaler_wulff.priority_stack import defaultlist
+from messthaler_wulff.data.common_lattices import CommonLattice
+from messthaler_wulff.datastructures.graph import Graph
+from messthaler_wulff.datastructures.lattice import Lattice, UniformNeighborhood
+from messthaler_wulff.datastructures.priority_stack import defaultlist
 
 strategy_graph = (st.one_of(list(map(st.just, CommonLattice)))
                   .map(lambda l: l.value)

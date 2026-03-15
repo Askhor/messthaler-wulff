@@ -4,9 +4,8 @@ import time
 from collections import defaultdict
 from typing import Sequence
 
-import colorama.ansi
 import numpy as np
-from colorama import Cursor
+from tqdm import tqdm
 
 from messthaler_wulff.decorators import wipe_screen
 from .progress import ProgressBar
@@ -119,6 +118,9 @@ class EnergyTracker:
     def atoms(self):
         return self.atom2energy.keys()
 
+    def __str__(self):
+        return str(self.atom2energy)
+
 
 class OmniSimulation:
     BACKWARDS = 0
@@ -150,6 +152,7 @@ class OmniSimulation:
 
         mode_energy = energy
         self.energy += mode_energy
+        assert self.energy >= 0
         reverse_boundary.set(atom, -mode_energy)
         if atom in mode_boundary:
             mode_boundary.unset(atom, mode_energy)
@@ -161,6 +164,7 @@ class OmniSimulation:
 
                 if self.energy_maximum() == new_energy:
                     reverse_boundary.unset(neighbor, neighbor_energy)
+                    ...
                 else:
                     reverse_boundary.set(neighbor, new_energy)
             elif neighbor in mode_boundary:
@@ -169,6 +173,7 @@ class OmniSimulation:
 
                 if self.energy_maximum() == new_energy:
                     mode_boundary.unset(neighbor, neighbor_energy)
+                    ...
                 else:
                     mode_boundary.set(neighbor, new_energy)
             else:
@@ -356,16 +361,11 @@ Press Enter to continue execution
         return self.boundaries[self.BACKWARDS].atoms()
 
     def fill(self, choice=lambda l: 0):
-        while True:
-            atom, energy = self.next_atom(choice, self.FORWARDS)
+        for i in tqdm(range(100_000)):
+            _, energy = self.boundaries[self.FORWARDS].minimum()
             if energy > 0:
                 break
-
-            self.adjust_atom_count(self.FORWARDS)
-
-            self.set_atom(atom,
-                          energy,
-                          self.FORWARDS)
+            self.add_atom(choice)
 
     def __str__(self):
         return "[" + ", ".join(map(str, sorted(self.points()))) + "]"
@@ -388,9 +388,9 @@ class SimpleNeighborhood:
 
         self.find_neighbors()
 
-        print(f"Calculated in {time.time() - start:.2f} seconds neighbors for:\n{transform}")
-        print(f"Neighbors are: {self.base_neighborhood}")
-        print()
+        # print(f"Calculated in {time.time() - start:.2f} seconds neighbors for:\n{transform}")
+        # print(f"Neighbors are: {self.base_neighborhood}")
+        # print()
 
     @staticmethod
     def points_within_dist(n, dist):

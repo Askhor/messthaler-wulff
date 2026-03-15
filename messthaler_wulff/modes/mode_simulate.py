@@ -4,9 +4,9 @@ import random
 
 import open3d as o3d
 
-from ._additive_simulation import SimpleNeighborhood, OmniSimulation
-from .data import *
-from .progress import ProgressBar
+from messthaler_wulff._additive_simulation import SimpleNeighborhood, OmniSimulation
+from messthaler_wulff.data import *
+from messthaler_wulff.progress import ProgressBar
 
 log = logging.getLogger("messthaler_wulff")
 log.debug(f"Loading {__name__}")

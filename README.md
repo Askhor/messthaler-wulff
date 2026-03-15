@@ -34,6 +34,23 @@ $$
 The idea now is to find crystals $c$ such that $\frac{E_{c}}{\#c}$
 is optimal.
 
+    Note:
+$$
+    E_c = \sum_{n} χ_c(n) · (\#N{}(n) - f_c(n))
+$$
+
+$$
+    = \sum_n χ_c(n) · \#N{}(n) - \sum_{a,b \in N{}(a)} χ_c(a) · χ_c(b)
+$$
+
+$$
+    N{}' := (\#N{}(n_i))_{1 ≤ i ≤ B}
+$$
+
+$$
+    E_c = (N{}'^\top · χ_c) - (χ_c^\top · A_G · χ_c)
+$$
+
 ## The Crystal Graph
 
 We can impose a graph structure on $C$ with the edges
@@ -47,9 +64,6 @@ graph. Since this graph is very dense and very large, we must first
 discuss some optimizations:
 
 - [$O(1)$ transformations](#efficient-transformations)
-- [Pruning bad transformations](#pruning-bad-transformations)
-- [Exploiting Symmetries](#exploiting-symmetries)
-- [Pruning bad crystals](#pruning-bad-crystals)
 
 ## Efficient Transformations
 
@@ -110,43 +124,28 @@ $$
             = s∘χ_c(n) · (2f_c(n) - \#N{}(n))
 $$
 
-## Pruning Bad Transformations
+## Min-Calculus
 
-Most transformations are pretty bad, for example in a solid crystal,
-removing a node in the center will only increase the energy, to combat this
-we will only consider locally optimal transformations.
+$$
+    Q: ℤ^n → ℤ
+$$
 
-This means that we only take transformations $t$ for which
-$Δ E_c$ is at most as large as the $Δ E_c$ for all other transformations
-from this node $c$.
+$$
+    r_k: ℤ^{n-k} → ℤ
+$$
 
-We can do this by directly storing $Δ E_c$ for every node or a similar proxy.
-Luckily we are already storing $f_c$ and we can simply derive $Δ E_c$.
+$$
+    \min(Q) = r_n
+$$
 
-Now, we do not just need to know the energy differential, but we also need to
-be able to query all nodes that have this minimal differential.
+$$
+    r_0 = Q
+$$
 
-This is achieved in $O(1)$ using the `PriorityStack` class, a priority queue
-optimized for this specific use case. We have two instances for our
-graph walking `AdditiveSimulation`, one for nodes that are not in the crystal and
-one for the ones that are. Depending on which direction is then queried
-(addition or removal of nodes), we query the appropriate instance for all nodes
-that have minimal/maximal $f_c(n)$.
+$$
+    r_k = \min(r_{k-1}(0),r_{k-1}(1))
+$$
 
-## Exploiting Symmetries
-
-Let $H$ be a group action on $G$. This is only useful to us 
-if the action commutes with the neighborhood function as in
-$\eta(h(n)) = h(\eta(n))$ for all $h \in H$. This not only means
-that the energy is also invariant under $H$, but also
-the possible next locally optimal transformations,
-meaning we can run our simulation only on canonical
-representatives of each equivalence class of $G/H$.
-
-We call a function $\chi_H: G \to H$ a characteristic for the
-group action $H$ if for all $h \in H$ and $g \in G$
-$$\chi_H(h(g)) = h \circ \chi_H(g)$$
-
-## Pruning Bad Crystals
+### Solvers
 
 ---

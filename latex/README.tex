@@ -89,6 +89,26 @@ subsets of \(G\)) as \[
 The idea now is to find crystals \(c\) such that \(\frac{E_{c}}{\#c}\)
 is optimal.
 
+\begin{verbatim}
+Note:
+\end{verbatim}
+
+\[
+    E_c = \sum_{n} \chi_c(n) \cdot (\#\mathcal{N}(n) - f_c(n))
+\]
+
+\[
+    = \sum_n \chi_c(n) \cdot \#\mathcal{N}(n) - \sum_{a,b \in \mathcal{N}(a)} \chi_c(a) \cdot \chi_c(b)
+\]
+
+\[
+    \mathcal{N}' \coloneq (\#\mathcal{N}(n_i))_{1 \le i \le B}
+\]
+
+\[
+    E_c = (\mathcal{N}'^\top \cdot \chi_c) - (\chi_c^\top \cdot A_G \cdot \chi_c)
+\]
+
 \hypertarget{the-crystal-graph}{%
 \subsection{The Crystal Graph}\label{the-crystal-graph}}
 
@@ -106,13 +126,6 @@ discuss some optimizations:
 \item
   \protect\hyperlink{efficient-transformations}{\(O(1)\)
   transformations}
-\item
-  \protect\hyperlink{pruning-bad-transformations}{Pruning bad
-  transformations}
-\item
-  \protect\hyperlink{exploiting-symmetries}{Exploiting Symmetries}
-\item
-  \protect\hyperlink{pruning-bad-crystals}{Pruning bad crystals}
 \end{itemize}
 
 \hypertarget{efficient-transformations}{%
@@ -175,49 +188,31 @@ Now for the calculation: \[
             = s\circ\chi_c(n) \cdot (2f_c(n) - \#\mathcal{N}(n))
 \]
 
-\hypertarget{pruning-bad-transformations}{%
-\subsection{Pruning Bad
-Transformations}\label{pruning-bad-transformations}}
+\hypertarget{min-calculus}{%
+\subsection{Min-Calculus}\label{min-calculus}}
 
-Most transformations are pretty bad, for example in a solid crystal,
-removing a node in the center will only increase the energy, to combat
-this we will only consider locally optimal transformations.
+\[
+    Q: \mathbb{Z}^n \rightarrow \mathbb{Z}
+\]
 
-This means that we only take transformations \(t\) for which
-\(\Delta E_c\) is at most as large as the \(\Delta E_c\) for all other
-transformations from this node \(c\).
+\[
+    r_k: \mathbb{Z}^{n-k} \rightarrow \mathbb{Z}
+\]
 
-We can do this by directly storing \(\Delta E_c\) for every node or a
-similar proxy. Luckily we are already storing \(f_c\) and we can simply
-derive \(\Delta E_c\).
+\[
+    \min(Q) = r_n
+\]
 
-Now, we do not just need to know the energy differential, but we also
-need to be able to query all nodes that have this minimal differential.
+\[
+    r_0 = Q
+\]
 
-This is achieved in \(O(1)\) using the \texttt{PriorityStack} class, a
-priority queue optimized for this specific use case. We have two
-instances for our graph walking \texttt{AdditiveSimulation}, one for
-nodes that are not in the crystal and one for the ones that are.
-Depending on which direction is then queried (addition or removal of
-nodes), we query the appropriate instance for all nodes that have
-minimal/maximal \(f_c(n)\).
+\[
+    r_k = \min(r_{k-1}(0),r_{k-1}(1))
+\]
 
-\hypertarget{exploiting-symmetries}{%
-\subsection{Exploiting Symmetries}\label{exploiting-symmetries}}
-
-Let \(H\) be a group action on \(G\). This is only useful to us if the
-action commutes with the neighborhood function as in
-\(\eta(h(n)) = h(\eta(n))\) for all \(h \in H\). This not only means
-that the energy is also invariant under \(H\), but also the possible
-next locally optimal transformations, meaning we can run our simulation
-only on canonical representatives of each equivalence class of \(G/H\).
-
-We call a function \(\chi_H: G \to H\) a characteristic for the group
-action \(H\) if for all \(h \in H\) and \(g \in G\)
-\[\chi_H(h(g)) = h \circ \chi_H(g)\]
-
-\hypertarget{pruning-bad-crystals}{%
-\subsection{Pruning Bad Crystals}\label{pruning-bad-crystals}}
+\hypertarget{solvers}{%
+\subsubsection{Solvers}\label{solvers}}
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 

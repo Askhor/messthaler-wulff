@@ -2,35 +2,17 @@ import random
 
 from hypothesis import given, strategies as st
 
-from messthaler_wulff.additive_simulation import AdditiveSimulation, Mode
-from messthaler_wulff.common_lattices import CommonLattice
-from messthaler_wulff.graph import Graph, Lattice
+from messthaler_wulff import fcc_transform
+from messthaler_wulff.sim.additive_simulation import AdditiveSimulation, Mode
+from messthaler_wulff.data.common_lattices import CommonLattice
+from messthaler_wulff.datastructures.graph import Graph
+from messthaler_wulff.datastructures.lattice import Lattice
 
 strategy_graph = (st.one_of(list(map(st.just, CommonLattice)))
                   .map(lambda l: l.value)
                   .map(Lattice))
 
-
-@given(strategy_graph)
-def test_init(graph: Graph):
-    sim = AdditiveSimulation(graph)
-    sim.test_invariants()
-
-
-@given(strategy_graph, st.integers(min_value=10, max_value=100))
-def test_random(graph: Graph, steps: int):
-    sim = AdditiveSimulation(graph)
-
-    for i in range(steps):
-        mode = random.choice([Mode.BACKWARDS, Mode.FORWARDS])
-        if sim.size == 0:
-            mode = Mode.FORWARDS
-        node = random.choice(sim.next(mode))
-        sim.toggle(node)
-        sim.test_invariants()
-
-
-from messthaler_wulff._additive_simulation import OmniSimulation
+from messthaler_wulff._additive_simulation import OmniSimulation, SimpleNeighborhood
 
 
 @given(strategy_graph, st.integers(min_value=10, max_value=100))
@@ -46,8 +28,41 @@ def test_compatibility(graph: Graph, steps: int):
             mode = Mode.FORWARDS
         assert frozenset(sim.next(mode)) == frozenset(sim2.next_atoms(mode.index))
         node = random.choice(sim.next(mode))
-        sim.move_to_boundary(node, mode)
+        sim.toggle(node)
         sim2.set_atom(node, sim2.boundaries[mode.index].atom2energy[node], mode.index)
+
+
+@given(st.lists(
+    st.tuples(
+        st.one_of(list(map(st.just, Mode))),
+        st.integers(min_value=0, max_value=10_000),
+    ), max_size=3000
+))
+def test_compatibility2(steps: list[tuple[Mode, int]]):
+    graph = Lattice(CommonLattice.fcc.value)
+    sim = AdditiveSimulation(graph)
+    sim2 = OmniSimulation(SimpleNeighborhood(fcc_transform()), None, (0, 0, 0, 0))
+
+    def intern(n):
+        return graph.intern(tuple(n[1:]))
+
+    assert frozenset(sim.next(Mode.FORWARDS)) == frozenset(map(intern, sim2.next_atoms(1)))
+
+    for i, (mode, index) in enumerate(steps):
+        if sim.size == 0:
+            mode = Mode.FORWARDS
+
+        if sim.size > 0:
+            assert frozenset(sim.next(Mode.BACKWARDS)) == frozenset(map(intern, sim2.next_atoms(0)))
+        assert frozenset(sim.next(Mode.FORWARDS)) == frozenset(map(intern, sim2.next_atoms(1)))
+
+        atom, energy = sim2.next_atom(lambda l: index % l, mode.index)
+        assert isinstance(atom, tuple)
+        assert isinstance(energy, int)
+        sim2.adjust_atom_count(mode.index)
+        sim2.set_atom(atom, energy, mode.index)
+        node = intern(atom)
+        sim.toggle(node)
 
 
 def test_weirdness():
@@ -95,3 +110,9 @@ def test_weirdness2():
 
         sim.toggle(node)
         sim2.set_atom(node, sim2.boundaries[Mode.FORWARDS.index].atom2energy[node], Mode.FORWARDS.index)
+
+
+del test_compatibility
+del test_compatibility2
+del test_weirdness
+del test_weirdness2

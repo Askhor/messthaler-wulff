@@ -3,96 +3,51 @@ import random
 import shutil
 import sys
 import textwrap
-from enum import Enum
 from functools import partial
 from typing import Iterable, Sequence, Optional
 
 from colorama import Fore, Back
 
-from messthaler_wulff.decorators import compose
-from messthaler_wulff.graph import Graph, Lattice
+from messthaler_wulff.datastructures.defaultlist import defaultlist
+from messthaler_wulff.datastructures.graph import Graph
+from messthaler_wulff.datastructures.lattice import Lattice
 from messthaler_wulff.datastructures.priority_stack import PriorityStack
+from messthaler_wulff.decorators import compose
+from messthaler_wulff.sim import crystal
 
 log = logging.getLogger("messthaler_wulff")
 
 
-class Mode(Enum):
-    BACKWARDS = 0, -1
-    FORWARDS = 1, 1
 
-    def __init__(self, index: int, sign: int):
-        super().__init__()
-        self.index = index
-        """The mathematical equivalent of this value. Forwards
-        is assigned 1 in the theory and backwards 0."""
-        self.sign = sign
-        """1 for forwards and -1 for backwards"""
-
-    def __str__(self):
-        return self.name[0]
-
-    def __repr__(self):
-        return str(self)
-
+# Old sim achieved 20_000 1/s
 
 class AdditiveSimulation:
     """A blazingly fast simulation of crystals (subsets of a lattice/graph)
     and transformations (addition/removal) which locally minimize surface energy"""
 
     def __init__(self, graph: Graph) -> None:
-        self.energy = 0
-        r"""Current energy of the crystal defined by
-        $$
-            \xi_{C_0} = \sum_{n \in C_0} l_n^1
-        $$"""
-        self.size = 0
-        """The number of atoms in the crystal"""
-        self.graph = graph
-        """The underlying graph used for the simulation"""
-
+        # self.energy = 0
+        # r"""Current energy of the crystal defined by
+        # $$
+        #     E_{c} = \sum_{n \in c} f_{G \setminus c}(n)
+        # $$"""
+        # self.size = 0
+        # """The number of atoms in the crystal"""
+        # self.graph = graph
+        # """The underlying graph used for the simulation"""
+        #
+        # self.f: defaultlist[int] = defaultlist(0)
+        # self.χ_c: defaultlist[int] = defaultlist(0)
         self.boundaries = [PriorityStack(graph.max_degree + 1),
                            PriorityStack(graph.max_degree + 1)]
+        # TODO
         self.boundary(Mode.FORWARDS).set_priority(
             Graph.ZERO,
             self.calculate_loneliness(Graph.ZERO, Mode.FORWARDS))
 
-        assert (self.boundary(Mode.FORWARDS).get_priority(Graph.ZERO)
-                == self.calculate_loneliness(Graph.ZERO, Mode.FORWARDS))
+        # assert (self.boundary(Mode.FORWARDS).get_priority(Graph.ZERO)
+        #         == self.calculate_loneliness(Graph.ZERO, Mode.FORWARDS))
 
-    def boundary(self, mode: Mode) -> PriorityStack:
-        """The priority stack containing values and energies
-        that are next in line to be added when going in the
-        'mode' direction"""
-        return self.boundaries[mode.index]
-
-    def reverse_boundary(self, mode: Mode) -> PriorityStack:
-        """The priority stack containing values and energies
-        of nodes that are already in the crystal when going
-        in the 'mode' direction"""
-        return self.boundaries[1 - mode.index]
-
-    def calculate_loneliness(self, node: int, mode: Mode) -> int:
-        r"""Calculates the loneliness according to $l_n^i = \\# \\{ n_0 \in \eta(n) \mid n_0 \in C_i \\}$,
-        where `node` is $n$ and `mode.index` is $i$.
-        """
-        energy = self.graph.degree(node)
-        reverse_boundary = self.reverse_boundary(mode)
-
-        for neighbor in self.graph.neighbors(node):
-            if neighbor in reverse_boundary:
-                energy -= 1
-
-        return energy
-
-    def toggle(self, node: int) -> None:
-        """Calls move_to_boundary with the appropriate mode, resulting in a toggle between boundaries."""
-        mode: Mode
-        if node in self.boundary(Mode.FORWARDS):
-            mode = Mode.FORWARDS
-        else:
-            mode = Mode.BACKWARDS
-
-        self.move_to_boundary(node, mode)
 
     def energy_delta(self, node: int, mode: Mode) -> int:
         """Computes the energy delta between the current state and the current state but with `node`
@@ -102,7 +57,7 @@ class AdditiveSimulation:
 
     def move_to_boundary(self, node: int, mode: Mode) -> None:
         """Updates this and neighboring nodes to have appropriate loneliness-scores after the move"""
-        self.size += mode.sign
+        self.size += crystal.sign
         assert self.size >= 0
 
         mode_boundary = self.boundary(mode)
@@ -191,20 +146,6 @@ class AdditiveSimulation:
                            f"{self.size}\n"
                            f"{list(self.boundary(Mode.BACKWARDS))}\n"
                            f"{list(self.boundary(Mode.FORWARDS))}")
-
-
-def duplicates[T](values: Iterable[T]) -> Iterable[T]:
-    """Returns an iterable of all elements of `values` that are duplicates"""
-    seen = set()
-    dups = set()
-
-    for value in values:
-        if value in seen:
-            if value not in dups:
-                yield value
-                dups.add(value)
-        else:
-            seen.add(value)
 
 
 def visualise_slice(sim: AdditiveSimulation, atomiser=lambda x, y: (x, y), crosshair=False, view_energies=False):

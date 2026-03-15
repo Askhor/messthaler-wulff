@@ -73,7 +73,7 @@ def view(parser: ArgumentParser) -> mydefaults.MAGIC:
         log.error("At least one of the following must be present for view: -p, -l or -c")
         sys.exit(1)
 
-    from .mode_view import run_mode
+    from messthaler_wulff.modes.mode_view import run_mode
     run_mode(use_orthogonal_projection=args.orthogonal,
              show_axes=args.axis,
              show_points=args.points,
@@ -89,7 +89,7 @@ def interactive(parser: ArgumentParser) -> mydefaults.MAGIC:
 
     args = yield
 
-    from .mode_interactive import run_mode
+    from messthaler_wulff.modes.mode_interactive import run_mode
     run_mode(goal=int(args.goal), dimension=args.dimension,
              lattice=args.lattice, windows_mode=False,
              initial=parse_initial_crystal(args.initial_crystal, args.dimension))
@@ -100,7 +100,7 @@ def simulate(parser: ArgumentParser) -> mydefaults.MAGIC:
     """Simulate massive crystals in 3d (On Linux may require environment variable XDG_SESSION_TYPE=x11)"""
     args = yield
     os.environ["XDG_SESSION_TYPE"] = "x11"
-    from .mode_simulate import run_mode
+    from messthaler_wulff.modes.mode_simulate import run_mode
     run_mode(goal=args.goal, lattice=args.lattice)
 
 
@@ -115,7 +115,7 @@ def explore(parser: ArgumentParser) -> mydefaults.MAGIC:
 
     args = yield
 
-    from .mode_explore import run_mode
+    from messthaler_wulff.modes.mode_explore import run_mode
     run_mode(goal=args.goal, lattice=args.lattice,
              initial=parse_initial_crystal(args.initial_crystal, args.dimension),
              dimension=args.dimension, verbose=args.verbose, dump_crystals=args.dump_crystals,

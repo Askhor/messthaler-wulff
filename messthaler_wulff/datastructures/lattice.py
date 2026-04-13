@@ -9,30 +9,7 @@ from messthaler_wulff.decorators import hacky_instance_cache
 type Vector = Sequence[int]
 
 
-class UniformNeighborhood:
-    """A neighborhood of nodes in a graph that has the same degree and structure at every point"""
 
-    def __init__(self, neighbors: list[Vector]) -> None:
-        self.dimension = len(neighbors[0])
-        assert all(len(v) == self.dimension for v in neighbors)
-        self._neighbors = neighbors
-        self.degree = len(self._neighbors)
-        self.zero = tuple([0] * self.dimension)
-
-    def neighbor(self, node: Vector, index: int) -> Vector:
-        neighbor = self._neighbors[index]
-        assert len(node) == len(neighbor), f"Dimension mismatch between {node} and {neighbor}"
-
-        return tuple(node[i] + neighbor[i] for i in range(len(node)))
-
-    @classmethod
-    def from_basis(cls, basis: list[Vector]) -> Self:
-        """This function inserts the inverses of the basis vectors"""
-        return cls([*basis, *(tuple(map(lambda x: -x, v)) for v in basis)])
-
-    @classmethod
-    def from_transform(cls, transform: np.ndarray) -> Self:
-        raise NotImplementedError()
 
 
 class Lattice(Graph, Universe[Vector, int]):

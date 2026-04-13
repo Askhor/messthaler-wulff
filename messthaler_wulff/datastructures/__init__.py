@@ -18,20 +18,6 @@ def duplicates[T](values: Iterable[T]) -> Iterable[T]:
             seen.add(value)
 
 
-class Universe[T, Key](ABC):
-    """Represents a context where every T has a canonical representation, the Key (usually int)"""
-
-    @abc.abstractmethod
-    def intern(self, rep: T) -> Key:
-        """Get the canonical key for the representative"""
-        ...
-
-    @abc.abstractmethod
-    def repr(self, node: Key) -> T:
-        """Get the value that the key represents"""
-        ...
-
-
 class HasInvariants(ABC):
     @abc.abstractmethod
     def invariant_failures(self) -> Iterable[Any]:

@@ -11,7 +11,7 @@ import networkx as nx
 import tqdm
 from networkx import is_weighted
 
-from messthaler_wulff.min_calculus import myprofiler
+from messthaler_wulff import myprofiler
 
 
 def compose(a: Callable, b: Callable) -> Callable:
@@ -173,7 +173,8 @@ class SAF[T](HasAddNMul, SAFSup):
         acc = Interval.cast(self.bias)
 
         for node, value in self.slf.items():
-            acc += self.mul * values(node) * value
+            with myprofiler.measure("Acc"):
+                acc += self.mul * values(node) * value
 
         return acc
 
@@ -392,7 +393,7 @@ def optimise(graph: nx.Graph, discarding_strategy) -> Iterator[int]:
 
         pbar = tqdm.tqdm(range(node_count, len(nodes_ordered) + 1))
         for node_index in pbar:
-            with myprofiler.measure("Main"):
+            with myprofiler.measure("Main", reset=True):
                 node = nodes_ordered[node_index]
                 nodes_processed.add(node)
                 raw_a = candidates.get_candidates(node_count, node_index - 1)
@@ -414,23 +415,16 @@ def optimise(graph: nx.Graph, discarding_strategy) -> Iterator[int]:
                 #     visualise_candidate(candy, Interval(0, 2), Interval(0, 2))
                 #     print(candy[1])
 
-                pbar.set_description(f"Nr. candidates: {len(new_candidates)}; {profiler}")
-
                 candidates.set_candidates(node_count, node_index, new_candidates)
 
                 assert all(len(values) == node_count for values, saf in
                            new_candidates), f"{node_count=}, {new_candidates=}, {candidates.print()}"
 
+            pbar.set_description(f"Nr. candidates: {len(new_candidates)}; {myprofiler.all_results()}")
+
         assert len(candidates.get_final_candidates(node_count)) >= 1
         yield min(saf.eval(lambda n: 0).int() for values, saf in candidates.get_final_candidates(node_count))
 
-
-def profile_fun(function):
-    def impl(*args, **kwargs):
-        profiler.start(function.__name__)
-        result = function(*args, **kwargs)
-        profiler.stop(function.__name__)
-        return result
 
     return impl
 
@@ -443,7 +437,7 @@ def STRATEGY_BRUTE_FORCE(candidates: Iterator[Candidate]) -> list[Candidate]:
     return list(candidates)
 
 
-@profile_fun
+@myprofiler.measure_function
 def STRATEGY_ELIMINATE_WORST(candidates: Iterator[Candidate]) -> list[Candidate]:
     candidates_list = list(candidates)
     assert len(candidates_list) > 0
@@ -476,7 +470,7 @@ def list_unordered_remove[T](_list: list[T], index: int) -> None:
         _list[index] = last
 
 
-@profile_fun
+@myprofiler.measure_function
 def STRATEGY_SLOW_ELIMINATION(candidates: Iterator[Candidate]) -> list[Candidate]:
     good_candidates: list[Candidate] = []
     candy_count = 0
@@ -490,7 +484,12 @@ def STRATEGY_SLOW_ELIMINATION(candidates: Iterator[Candidate]) -> list[Candidate
         for i in range(len(good_candidates) - 1, -1, -1):
             good_saf = good_candidates[i][1]
 
-            res = eval_candy(saf - good_saf)
+            with myprofiler.measure("Calculating Difference"):
+                diff = saf - good_saf
+
+            with myprofiler.measure("Evaluating Difference"):
+                res = eval_candy(diff)
+
             if not res.min < 0:
                 is_good = False
                 break
@@ -624,6 +623,7 @@ def main() -> None:
     atoms = 400
     sl = 2 * int(math.sqrt(atoms))
     graph: nx.Graph = CommonLattice.fcc.value.graph(sl)
+    print(f"The graph has {len(graph)} nodes")
 
     strategy = compose(STRATEGY_SLOW_ELIMINATION, STRATEGY_ELIMINATE_WORST)
 

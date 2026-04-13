@@ -36,12 +36,5 @@ def hacky_instance_cache(cache_name):
     return deco
 
 
-def compose(a: Callable, b: Callable) -> Callable:
-    def impl(*args, **kwargs):
-        return a(b(*args, **kwargs))
-
-    return impl
-
-
 def wipe_screen():
     print(end=clear_screen(2) + clear_screen(3) + Cursor.POS(0, 0), flush=True)

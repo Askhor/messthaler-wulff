@@ -1,1 +1,0 @@
-from messthaler_wulff.datastructures.lattice import UniformNeighborhood

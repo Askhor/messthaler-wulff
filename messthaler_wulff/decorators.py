@@ -1,9 +1,8 @@
 import logging
 from functools import wraps
-from typing import Callable
 
-from colorama.ansi import clear_screen
 from colorama import Cursor
+from colorama.ansi import clear_screen
 
 log = logging.getLogger("messthaler_wulff")
 log.debug(f"Loading {__name__}")

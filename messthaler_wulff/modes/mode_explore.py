@@ -2,12 +2,10 @@ import logging
 import os
 from pathlib import Path
 
-import colorama.ansi
-from colorama import Cursor
+from messthaler_wulff._explorative_simulation import ExplorativeSimulation
 
 from messthaler_wulff._additive_simulation import OmniSimulation, SimpleNeighborhood
 from messthaler_wulff.decorators import wipe_screen
-from messthaler_wulff._explorative_simulation import ExplorativeSimulation
 
 log = logging.getLogger("messthaler_wulff")
 log.debug(f"Loading {__name__}")
@@ -55,9 +53,9 @@ def run_mode(goal, lattice, dimension: int, dump_crystals=None, verbose=False, i
                     log.error(f"File {file} already exists")
                     continue
                 string = "\n".join("["
-                                        + ", ".join(map(str, c.atoms()))
-                                        + "]"
-                                        for c in explorer.crystals[d])
+                                   + ", ".join(map(str, c.atoms()))
+                                   + "]"
+                                   for c in explorer.crystals[d])
                 log.info(f"Writing {len(string)} bytes to {file.absolute()}")
                 assert file.write_text(string) != 0, f"File {file} was not written to"
                 assert os.path.getsize(file) != 0, f"File {file} was not written to"

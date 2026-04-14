@@ -3,10 +3,10 @@ import sys
 
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
-
 import messthaler_wulff.objects as objects
+import numpy as np
 from messthaler_wulff.objects import ObjectCollection
+
 from messthaler_wulff.utils import convex_hull, auto_lines
 
 log = logging.getLogger("messthaler_wulff")

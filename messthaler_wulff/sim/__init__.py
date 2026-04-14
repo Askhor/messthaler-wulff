@@ -1,7 +1,7 @@
 import tqdm
+from messthaler_wulff.datastructures.lattice import Lattice
 
 from messthaler_wulff.data.common_lattices import CommonLattice
-from messthaler_wulff.datastructures.lattice import Lattice
 from messthaler_wulff.sim.crystal import Crystal
 from messthaler_wulff.sim.energy import SurfaceEnergy
 from messthaler_wulff.sim.guide import CrystalGuide

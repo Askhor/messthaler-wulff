@@ -1,6 +1,7 @@
 from typing import Sequence
 
 from messthaler_wulff.datastructures.priority_stack import PriorityMode, PriorityStack
+
 from messthaler_wulff.sim.crystal import CrystalLike
 from messthaler_wulff.sim.quantity import CrystalQuantity
 

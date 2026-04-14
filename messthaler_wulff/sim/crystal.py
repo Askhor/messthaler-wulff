@@ -1,8 +1,9 @@
 import abc
 from typing import override
 
-from messthaler_wulff.datastructures.defaultlist import defaultlist
 from messthaler_wulff.datastructures.graph import Graph
+
+from messthaler_wulff.datastructures.defaultlist import defaultlist
 
 
 def sign(x: int) -> int:

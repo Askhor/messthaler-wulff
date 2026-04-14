@@ -7,16 +7,14 @@ from functools import partial
 from typing import Iterable, Sequence, Optional
 
 from colorama import Fore, Back
-
-from messthaler_wulff.datastructures.defaultlist import defaultlist
 from messthaler_wulff.datastructures.graph import Graph
 from messthaler_wulff.datastructures.lattice import Lattice
 from messthaler_wulff.datastructures.priority_stack import PriorityStack
+
 from messthaler_wulff.decorators import compose
 from messthaler_wulff.sim import crystal
 
 log = logging.getLogger("messthaler_wulff")
-
 
 
 # Old sim achieved 20_000 1/s
@@ -47,7 +45,6 @@ class AdditiveSimulation:
 
         # assert (self.boundary(Mode.FORWARDS).get_priority(Graph.ZERO)
         #         == self.calculate_loneliness(Graph.ZERO, Mode.FORWARDS))
-
 
     def energy_delta(self, node: int, mode: Mode) -> int:
         """Computes the energy delta between the current state and the current state but with `node`

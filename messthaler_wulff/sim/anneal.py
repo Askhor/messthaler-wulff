@@ -1,12 +1,8 @@
 import random
-import time
-from collections import defaultdict
 from typing import Iterator, Any
 
-import tqdm
 from networkx import Graph
 
-from messthaler_wulff.bravais import CommonBravais
 from messthaler_wulff.sim.qbv_simulation import QBVSimulation
 
 
@@ -50,35 +46,3 @@ class Anneal:
         while True:
             self.walk_random_node()
             yield self.sim
-
-
-def main():
-    k = 20
-    n = k
-    t = 10
-    g = CommonBravais.fcc.value.graph(n)
-
-    a = Anneal(g, k)
-    best = defaultdict(lambda: 1000000000)
-
-    pbar = tqdm.tqdm(a.generate_states())
-
-    start = time.time()
-    last_log = time.time()
-
-
-    for s in pbar:
-        if s.energy < best[s.size]:
-            best[s.size] = s.energy
-        if time.time() - start > t:
-            break
-        if time.time() - last_log > 1:
-            last_log = time.time()
-            pbar.set_postfix({str(k): str(v) for k,v in best.items()})
-
-
-    print(*best.items())
-
-
-if __name__ == '__main__':
-    main()

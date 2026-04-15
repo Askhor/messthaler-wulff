@@ -6,7 +6,7 @@ from typing import Iterator, Any
 import tqdm
 from networkx import Graph
 
-from messthaler_wulff.lattice import CommonLattice
+from messthaler_wulff.bravais import CommonBravais
 from messthaler_wulff.sim.qbv_simulation import QBVSimulation
 
 
@@ -53,10 +53,10 @@ class Anneal:
 
 
 def main():
-    k = 200
-    n = 100
-    t = 1000
-    g = CommonLattice.fcc.value.graph(n)
+    k = 20
+    n = k
+    t = 10
+    g = CommonBravais.fcc.value.graph(n)
 
     a = Anneal(g, k)
     best = defaultdict(lambda: 1000000000)

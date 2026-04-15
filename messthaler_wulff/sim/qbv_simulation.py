@@ -2,9 +2,10 @@ import sys
 from typing import Any
 
 import networkx as nx
+import tqdm
 from networkx import Graph
 
-from messthaler_wulff.lattice import CommonLattice
+from messthaler_wulff.bravais import CommonBravais
 from messthaler_wulff.utils import priority_stack
 
 
@@ -16,12 +17,13 @@ class QBVSimulation:
         check_graph_validity(graph)
         self.graph: Graph = graph
         self.nodes: set[Any] = set()
-        self.deltas: dict[Any, int] = {node: self.graph.nodes[node]["weight"] for node in self.graph.nodes}
+        self.deltas: dict[Any, int] = {node: self.graph.nodes[node]["weight"] for node in
+                                       tqdm.tqdm(self.graph.nodes, desc="Calculating initial deltas")}
         self.size: int = 0
         self.energy: int = 0
         self.boundaries = [priority_stack(), priority_stack()]
 
-        for node in self.graph.nodes:
+        for node in tqdm.tqdm(self.graph.nodes, desc="Initialising outside boundary"):
             self.boundaries[self.OUTSIDE].set(node, self.deltas[node])
 
     def chi(self, node: Any) -> int:
@@ -77,12 +79,12 @@ def check_graph_validity(graph: Graph):
         print("Not all edges in the graph have weights")
         error = True
 
-    for a, data in graph.nodes(data=True):
+    for a, data in tqdm.tqdm(graph.nodes(data=True), desc="Checking nodes"):
         if "weight" not in data:
             print(f"The node {a} in the graph was not assigned a weight")
             error = True
 
-    for a, b in graph.edges:
+    for a, b in tqdm.tqdm(graph.edges, desc="Checking edges"):
         if graph.edges[a, b]["weight"] != graph.edges[b, a]["weight"]:
             print(f"The edge ({a}, {b}) has a different weight to ({b}, {a})")
             error = True
@@ -91,13 +93,8 @@ def check_graph_validity(graph: Graph):
         sys.exit(-1)
 
 
-class ID:
-    def __getitem__(self, item):
-        return item
-
-
 def main():
-    g = CommonLattice.square.value.graph(2)
+    g = CommonBravais.square.value.graph(2)
 
     sim = QBVSimulation(g)
     print(next(iter(g)))
@@ -106,9 +103,6 @@ def main():
     for node in [(0, 0), (0, 0), (0, 0), (1, 0), (0, 1), (1, 1)]:
         sim.toggle(node)
         print(sim)
-
-    # nx.draw(g, ID())
-    # plt.show()
 
 
 if __name__ == "__main__":

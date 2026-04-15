@@ -11,7 +11,6 @@ import argcomplete
 import mydefaults
 import numpy as np
 
-from .data import fcc_transform
 from .parsing import parse_crystal
 from .version import program_version
 

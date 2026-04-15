@@ -138,6 +138,16 @@ def clamped_line(x1, y1, x2, y2, x):
     return clamp(raw_value, min(y1, y2), max(y1, y2))
 
 
+def call_by_getitem(function):
+    class impl:
+        def __getitem__(self, i):
+            return function(i)
+
+        def __call__(self, *args, **kwargs):
+            return function(*args, **kwargs)
+
+    return impl()
+
 def distance_matches(a, b, length):
     distance = vector_length(np.subtract(a, b))
 

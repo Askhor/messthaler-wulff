@@ -14,7 +14,7 @@ def test_uniform_neighborhood():
     n = UniformNeighborhood.from_basis([
         [0, 1],
         [1, 0]])
-    n._neighbors = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    n._primitives = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 
     assert n.neighbor((0, 0), 0) == (0, 1)
     assert n.neighbor((0, 0), 1) == (1, 0)
@@ -80,6 +80,6 @@ class DiscoverNeighbors:
 @given(strategy_graph, st.lists(st.integers(min_value=0, max_value=100), min_size=5, max_size=10))
 def test_neighbor_gen(lattice: Lattice, path: list[int]):
     DiscoverNeighbors(lattice, len(path))
-    before = frozenset(lattice._neighbors)
+    before = frozenset(lattice._primitives)
     lattice.walk_path(Graph.ZERO, [x % lattice.max_degree for x in path])
-    assert before == frozenset(lattice._neighbors)
+    assert before == frozenset(lattice._primitives)

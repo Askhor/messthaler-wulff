@@ -5,15 +5,24 @@ import networkx as nx
 from networkx import Graph
 
 from messthaler_wulff.lattice import CommonLattice
+from messthaler_wulff.utils import priority_stack
 
 
 class QBVSimulation:
+    INSIDE = 1
+    OUTSIDE = 0
+
     def __init__(self, graph: Graph) -> None:
         check_graph_validity(graph)
         self.graph: Graph = graph
         self.nodes: set[Any] = set()
+        self.deltas: dict[Any, int] = {node: self.graph.nodes[node]["weight"] for node in self.graph.nodes}
         self.size: int = 0
         self.energy: int = 0
+        self.boundaries = [priority_stack(), priority_stack()]
+
+        for node in self.graph.nodes:
+            self.boundaries[self.OUTSIDE].set(node, self.deltas[node])
 
     def chi(self, node: Any) -> int:
         return 1 if node in self.nodes else 0
@@ -36,9 +45,18 @@ class QBVSimulation:
         else:
             self.nodes.add(node)
 
-        self.size += sign(self.chi(node))
-        delta = sign(self.chi(node)) * self.delta(node)
-        self.energy += delta
+        chi = self.chi(node)
+
+        for n in self.graph.neighbors(node):
+            self.deltas[n] += sign(chi) * 2 * self.graph.edges[node, n]["weight"]
+            self.boundaries[self.chi(n)].set(n, self.deltas[n])
+
+        self.size += sign(chi)
+        delta = self.deltas[node]
+        self.energy += sign(chi) * delta
+
+        self.boundaries[chi].set(node, delta)
+        self.boundaries[1 - chi].unset(node)
 
     def __str__(self) -> str:
         return f"QBVS {self.energy}/{self.size}"

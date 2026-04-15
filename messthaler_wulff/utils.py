@@ -1,5 +1,7 @@
 import math
 import random
+from collections import defaultdict
+from typing import Optional
 
 from scipy.spatial import ConvexHull
 
@@ -48,6 +50,79 @@ class setr[T]:
 
     def __str__(self) -> str:
         return str(self.list)
+
+
+def psi(x: int) -> int:
+    return 2 * x - 1
+
+
+class priority_stack[T]:
+    MIN = 0
+    MAX = 1
+
+    def __init__(self) -> None:
+        self.levels: defaultdict[int, setr[T]] = defaultdict(setr)
+        self.priorities: dict[T, int] = {}
+        self.bounds: list[Optional[int]] = [None, None]
+
+    def __len__(self) -> int:
+        return len(self.priorities)
+
+    def set(self, el: T, priority: int) -> None:
+        old_min = self.bounds[self.MIN]
+        old_max = self.bounds[self.MAX]
+        if old_min is None or priority < old_min:
+            self.bounds[self.MIN] = priority
+        if old_max is None or priority > old_max:
+            self.bounds[self.MAX] = priority
+
+        if el in self.priorities:
+            self.levels[self.priorities[el]].remove(el)
+
+        self.priorities[el] = priority
+        self.levels[priority].add(el)
+
+        self.contract_bounds()
+
+    def unset(self, el: T) -> None:
+        if el not in self.priorities:
+            return
+
+        self.levels[self.priorities[el]].remove(el)
+        del self.priorities[el]
+
+        if len(self) > 0:
+            self.contract_bounds()
+        else:
+            self.bounds[0] = None
+            self.bounds[1] = None
+
+    def contract_bound(self, bound: int) -> None:
+        s = psi(bound)
+        current = self.bounds[bound]
+
+        while current not in self.levels or len(self.levels[current]) == 0:
+            current -= s
+
+        self.bounds[bound] = current
+
+    def contract_bounds(self) -> None:
+        self.contract_bound(self.MIN)
+        self.contract_bound(self.MAX)
+
+    def min(self) -> setr[T]:
+        assert self.bounds[self.MIN] is not None
+        return self.levels[self.bounds[self.MIN]]
+
+    def max(self) -> setr[T]:
+        assert self.bounds[self.MAX] is not None
+        return self.levels[self.bounds[self.MAX]]
+
+    def __repr__(self) -> str:
+        return str(self)
+
+    def __str__(self) -> str:
+        return f"{self.bounds[self.MIN]} ≤ {dict(self.levels)} ≤ {self.bounds[self.MAX]}"
 
 
 def clamp(x, _min, _max):

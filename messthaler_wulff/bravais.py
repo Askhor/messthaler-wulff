@@ -5,9 +5,8 @@ from typing import Iterator
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import tqdm
 
-from messthaler_wulff.utils import call_by_getitem
+from messthaler_wulff import mylog
 from messthaler_wulff.vector import vec
 
 
@@ -65,10 +64,10 @@ class Bravais:
     def graph(self, radius: int) -> nx.Graph:
         g = nx.Graph()
 
-        nodes = set(tqdm.tqdm(self.bfs(radius), desc="Generating graph"))
+        nodes = set(mylog.tqdm(self.bfs(radius), desc="Generating graph"))
         g.add_nodes_from((n, {"weight": self.degree}) for n in nodes)
 
-        for node in tqdm.tqdm(nodes, desc="Adding edges"):
+        for node in mylog.tqdm(nodes, desc="Adding edges"):
             for i in range(self.degree):
                 n = self.neighbor(node, i)
                 if n in nodes:

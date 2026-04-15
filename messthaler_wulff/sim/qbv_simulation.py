@@ -2,11 +2,12 @@ import sys
 from typing import Any
 
 import networkx as nx
-import tqdm
 from networkx import Graph
 
+from messthaler_wulff import mylog
 from messthaler_wulff.bravais import CommonBravais
 from messthaler_wulff.utils import priority_stack
+from messthaler_wulff.vector import vec
 
 
 class QBVSimulation:
@@ -18,12 +19,12 @@ class QBVSimulation:
         self.graph: Graph = graph
         self.nodes: set[Any] = set()
         self.deltas: dict[Any, int] = {node: self.graph.nodes[node]["weight"] for node in
-                                       tqdm.tqdm(self.graph.nodes, desc="Calculating initial deltas")}
+                                       mylog.tqdm(self.graph.nodes, desc="Calculating initial deltas")}
         self.size: int = 0
         self.energy: int = 0
         self.boundaries = [priority_stack(), priority_stack()]
 
-        for node in tqdm.tqdm(self.graph.nodes, desc="Initialising outside boundary"):
+        for node in mylog.tqdm(self.graph.nodes, desc="Initialising outside boundary"):
             self.boundaries[self.OUTSIDE].set(node, self.deltas[node])
 
     def chi(self, node: Any) -> int:
@@ -79,31 +80,15 @@ def check_graph_validity(graph: Graph):
         print("Not all edges in the graph have weights")
         error = True
 
-    for a, data in tqdm.tqdm(graph.nodes(data=True), desc="Checking nodes"):
+    for a, data in mylog.tqdm(graph.nodes(data=True), desc="Checking nodes"):
         if "weight" not in data:
             print(f"The node {a} in the graph was not assigned a weight")
             error = True
 
-    for a, b in tqdm.tqdm(graph.edges, desc="Checking edges"):
+    for a, b in mylog.tqdm(graph.edges, desc="Checking edges"):
         if graph.edges[a, b]["weight"] != graph.edges[b, a]["weight"]:
             print(f"The edge ({a}, {b}) has a different weight to ({b}, {a})")
             error = True
 
     if error:
         sys.exit(-1)
-
-
-def main():
-    g = CommonBravais.square.value.graph(2)
-
-    sim = QBVSimulation(g)
-    print(next(iter(g)))
-    print(sim)
-
-    for node in [(0, 0), (0, 0), (0, 0), (1, 0), (0, 1), (1, 1)]:
-        sim.toggle(node)
-        print(sim)
-
-
-if __name__ == "__main__":
-    main()

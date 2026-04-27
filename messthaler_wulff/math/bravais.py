@@ -11,7 +11,19 @@ from messthaler_wulff.math.vector import vec
 
 
 class Bravais:
+    """A class representing Bravais lattices for crystallography."""
+
     def __init__(self, primitives: list[vec], transform: np.ndarray = None) -> None:
+        """
+                Initialize the Bravais lattice with given primitive vectors and an optional transformation matrix.
+
+                Args:
+                    primitives (list[vec]): A list of primitive vectors constituting the lattice.
+                    transform (np.ndarray, optional): A transformation matrix. If None, an identity matrix is used.
+
+                Raises:
+                    ValueError: If the primitives are invalid.
+                """
         self.check_primitives(primitives)
         self.dimension = len(primitives[0])
         assert all(len(v) == self.dimension for v in primitives)
@@ -27,6 +39,15 @@ class Bravais:
 
     @staticmethod
     def check_primitives(primitives: list[vec]):
+        """
+                Check if the provided primitive vectors are valid.
+
+                Args:
+                    primitives (list[vec]): A list of primitive vectors to check.
+
+                Raises:
+                    ValueError: If the primitives contain inverses of any vectors or are not unique.
+                """
         try:
             ps = set(primitives)
         except TypeError:
@@ -36,6 +57,15 @@ class Bravais:
                 raise ValueError("Primitives contain inverses of some vector(s)")
 
     def primitive(self, index: int) -> vec:
+        """
+                Retrieve a primitive vector by its index, accounting for inverse vectors.
+
+                Args:
+                    index (int): The index of the desired primitive vector.
+
+                Returns:
+                    vec: The corresponding primitive vector, potentially negated.
+                """
         k = len(self._primitives)
         if index >= k:
             index -= k
@@ -44,10 +74,29 @@ class Bravais:
         return self._primitives[index]
 
     def neighbor(self, node: vec, index: int) -> vec:
+        """
+                Calculate the neighboring vector by adding a primitive vector to a given node.
+
+                Args:
+                    node (vec): The vector representing the current node.
+                    index (int): The index of the primitive vector to add.
+
+                Returns:
+                    vec: The resulting neighboring vector.
+                """
         assert len(node) == self.dimension
         return node + self.primitive(index)
 
     def bfs(self, radius: int) -> Iterator[vec]:
+        """
+                Perform a breadth-first search (BFS) up to a specified radius.
+
+                Args:
+                    radius (int): The search radius.
+
+                Yields:
+                    Iterator[vec]: The vector nodes encountered during the BFS.
+                """
         current_nodes = {self.zero}
         visited = set()
 
@@ -66,6 +115,15 @@ class Bravais:
             current_nodes = next_nodes
 
     def graph(self, radius: int) -> nx.Graph:
+        """
+                Generate a graph representation of the Bravais lattice within a specified radius.
+
+                Args:
+                    radius (int): The radius for BFS in the lattice.
+
+                Returns:
+                    nx.Graph: A NetworkX graph representing the lattice structure.
+                """
         g = nx.Graph()
 
         nodes = set(mylog.tqdm(self.bfs(radius), desc="Generating graph"))
@@ -90,6 +148,21 @@ def plot_bravais(bravais: Bravais,
                  edge_color="black",
                  node_alpha=0.8,
                  edge_alpha=1.0):
+    """
+        Plot the Bravais lattice graph using Matplotlib.
+
+        Args:
+            bravais (Bravais): The Bravais object representing the lattice.
+            graph (nx.Graph): The graph representation of the lattice.
+            ax (matplotlib.axes.Axes, optional): The axes to plot on. If None, a new one will be created.
+            node_color (str, optional): Color of the nodes. Default is "blue".
+            edge_color (str, optional): Color of the edges. Default is "black".
+            node_alpha (float, optional): Opacity of the nodes. Default is 0.8.
+            edge_alpha (float, optional): Opacity of the edges. Default is 1.0.
+
+        Returns:
+            matplotlib.axes.Axes: The axes with the plotted Bravais lattice.
+        """
     assert bravais.dimension in [2, 3], bravais.dimension
 
     if ax is None:
@@ -109,6 +182,7 @@ def plot_bravais(bravais: Bravais,
 
 
 class CommonBravais(Enum):
+    """Enum representation of common Bravais lattices."""
     square = Bravais([
         vec.new(1, 0),
         vec.new(0, 1)])

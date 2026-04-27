@@ -25,7 +25,7 @@ def crystals(parser: ArgumentParser) -> mydefaults.MAGIC:
     crystal_count = 0
 
     for state in anneal.generate_states():
-        if state.size == atom_count and state.energy == energy:
+        if state.size == atom_count and (energy == -1 or state.energy == energy):
             print(crystals_parser.to_json(state.nodes))
             crystal_count += 1
             if crystal_count > args.maximum:

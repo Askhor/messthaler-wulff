@@ -2,16 +2,46 @@ from functools import singledispatchmethod
 
 
 class vec:
+    """A class representing a mathematical vector."""
+
     def __init__(self, value: tuple):
+        """
+                Initializes the vector with a given tuple of integer values.
+
+                Args:
+                    value (tuple): A tuple containing integer values for the vector.
+
+                Raises:
+                    AssertionError: If any element in the tuple is not an integer.
+                """
+
         self.value: tuple = tuple(value)
         assert all(isinstance(x, int) for x in value)
 
     @classmethod
     def new(cls, *values: int):
+        """
+                Create a new vector object from a variable number of integer values.
+
+                Args:
+                    *values (int): An arbitrary number of integer values.
+
+                Returns:
+                    vec: A new instance of the vector.
+                """
         return cls(tuple(values))
 
     @classmethod
     def zero(cls, dim: int):
+        """
+                Create a zero vector of specified dimension.
+
+                Args:
+                    dim (int): The dimension of the zero vector.
+
+                Returns:
+                    vec: A new vector initialized to all zeros.
+                """
         return cls(tuple([0] * dim))
 
     def __len__(self):

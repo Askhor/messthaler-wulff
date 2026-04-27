@@ -60,6 +60,6 @@ def run_mode(initial, lattice, use_orthogonal_projection=False, show_axes=True, 
     if show_convex_hull:
         result @= convex_hull(points)
 
-    result.plot()
+    result.plot_crystal()
 
     show_matplotlib()

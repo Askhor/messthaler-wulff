@@ -57,10 +57,15 @@ def psi(x: int) -> int:
 
 
 class priority_stack[T]:
+    """A priority stack that maintains elements based on their priority levels."""
+
     MIN = 0
     MAX = 1
 
     def __init__(self) -> None:
+        """
+                Initialize the priority stack with empty levels and no bounds.
+                """
         self.levels: defaultdict[int, setr[T]] = defaultdict(setr)
         self.priorities: dict[T, int] = {}
         self.bounds: list[Optional[int]] = [None, None]
@@ -69,6 +74,16 @@ class priority_stack[T]:
         return len(self.priorities)
 
     def set(self, el: T, priority: int) -> None:
+        """
+                Set the priority of a given element.
+
+                This operation updates the bounds of the stack as necessary and
+                ensures that the element is registered under its new priority level.
+
+                Args:
+                    el (T): The element to set.
+                    priority (int): The priority level to assign to the element.
+                """
         old_min = self.bounds[self.MIN]
         old_max = self.bounds[self.MAX]
         if old_min is None or priority < old_min:
@@ -85,6 +100,14 @@ class priority_stack[T]:
         self.contract_bounds()
 
     def unset(self, el: T) -> None:
+        """
+                Remove an element from the priority stack.
+
+                This method deletes the element and updates the bounds accordingly.
+
+                Args:
+                    el (T): The element to unset.
+                """
         if el not in self.priorities:
             return
 
@@ -98,6 +121,12 @@ class priority_stack[T]:
             self.bounds[1] = None
 
     def contract_bound(self, bound: int) -> None:
+        """
+                Contract a specific bound (minimum or maximum) by finding the nearest existing priority level.
+
+                Args:
+                    bound (int): The index indicating which bound to contract (0 for MIN, 1 for MAX).
+                """
         s = psi(bound)
         current = self.bounds[bound]
 
@@ -111,10 +140,28 @@ class priority_stack[T]:
         self.contract_bound(self.MAX)
 
     def min(self) -> setr[T]:
+        """
+                Get all elements at the minimum priority level.
+
+                Returns:
+                    set: A set of elements at the current minimum priority level.
+
+                Raises:
+                    AssertionError: If the minimum bound is not set.
+                """
         assert self.bounds[self.MIN] is not None
         return self.levels[self.bounds[self.MIN]]
 
     def max(self) -> setr[T]:
+        """
+                Get all elements at the maximum priority level.
+
+                Returns:
+                    set: A set of elements at the current maximum priority level.
+
+                Raises:
+                    AssertionError: If the maximum bound is not set.
+                """
         assert self.bounds[self.MAX] is not None
         return self.levels[self.bounds[self.MAX]]
 

@@ -9,10 +9,20 @@ from messthaler_wulff.utils import priority_stack
 
 
 class QBVSimulation:
+    """QBV stands for Quadratic Binary Vector, simulating quadratic forms on binary vectors."""
     INSIDE = 1
     OUTSIDE = 0
 
     def __init__(self, graph: Graph) -> None:
+        """
+                Initialize the QBV simulation with a given graph.
+
+                Args:
+                    graph (Graph): A NetworkX graph representing the binary vector structure.
+
+                Raises:
+                    SystemExit: If the graph is invalid due to being directed or lacking weights.
+                """
         check_graph_validity(graph)
         self.graph: Graph = graph
         self.nodes: set[Any] = set()
@@ -26,6 +36,15 @@ class QBVSimulation:
             self.boundaries[self.OUTSIDE].set(node, self.deltas[node])
 
     def chi(self, node: Any) -> int:
+        """
+              Compute the chi value for a given node.
+
+              Args:
+                  node (Any): The node for which to compute chi.
+
+              Returns:
+                  int: 1 if the node is in the current QBV state, 0 otherwise.
+              """
         return 1 if node in self.nodes else 0
 
     def delta(self, node: Any) -> int:
@@ -37,10 +56,25 @@ class QBVSimulation:
         return delta
 
     def is_uniform(self, node: Any) -> bool:
+        """
+                Check if a node is uniform regarding its neighbors.
+
+                Args:
+                    node (Any): The node to check.
+
+                Returns:
+                    bool: True if all neighbors have the same QBV state as the node; otherwise False.
+                """
         value = node in self.nodes
         return all(value == (n in self.nodes) for n in self.graph.neighbors(node))
 
     def toggle(self, node: Any) -> None:
+        """
+                Toggle the state of a node between inside and outside.
+
+                Args:
+                    node (Any): The node to toggle.
+                """
         if node in self.nodes:
             self.nodes.remove(node)
         else:
@@ -68,6 +102,15 @@ def sign(x: int) -> int:
 
 
 def check_graph_validity(graph: Graph):
+    """
+        Check if the provided graph is valid for the QBV simulation.
+
+        Args:
+            graph (Graph): The graph to validate.
+
+        Raises:
+            SystemExit: If the graph is invalid (directed, unweighted edges, or inconsistent weights).
+        """
     error = False
 
     if graph.is_directed():

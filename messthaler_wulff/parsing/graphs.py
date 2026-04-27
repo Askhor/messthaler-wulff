@@ -80,8 +80,11 @@ def get_graph(path: Path, args: list[str]):
     return model.root.get_graph(args)
 
 
-def add_arguments(parser: ArgumentParser):
-    parser.add_argument("graph", type=Path)
+def add_arguments(parser: ArgumentParser, positional: bool = True):
+    if positional:
+        parser.add_argument("graph", type=Path)
+    else:
+        parser.add_argument("-g", "--graph", type=Path)
     parser.add_argument("-p", "--graph-parameter", type=int, default=None)
 
 

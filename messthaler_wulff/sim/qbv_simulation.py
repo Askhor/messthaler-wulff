@@ -5,9 +5,7 @@ import networkx as nx
 from networkx import Graph
 
 from messthaler_wulff import mylog
-from messthaler_wulff.bravais import CommonBravais
 from messthaler_wulff.utils import priority_stack
-from messthaler_wulff.vector import vec
 
 
 class QBVSimulation:

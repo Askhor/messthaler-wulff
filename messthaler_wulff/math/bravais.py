@@ -7,7 +7,7 @@ import networkx as nx
 import numpy as np
 
 from messthaler_wulff import mylog
-from messthaler_wulff.vector import vec
+from messthaler_wulff.math.vector import vec
 
 
 class Bravais:

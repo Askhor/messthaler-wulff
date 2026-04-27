@@ -3,7 +3,8 @@ from functools import singledispatchmethod
 
 class vec:
     def __init__(self, value: tuple):
-        self.value: tuple = value
+        self.value: tuple = tuple(value)
+        assert all(isinstance(x, int) for x in value)
 
     @classmethod
     def new(cls, *values: int):
@@ -46,7 +47,7 @@ class vec:
         return self - other
 
     def __repr__(self):
-        return str(self)
+        return f"vec.new{self.value}"
 
     def __str__(self):
         return str(self.value)

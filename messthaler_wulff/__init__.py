@@ -7,8 +7,7 @@ import argcomplete
 import mydefaults
 
 from . import mylog
-from .modes import mode_energies
-from .parsing import parse_crystal
+from .modes import mode_energies, mode_crystals
 from .version import program_version
 
 mylog.init()

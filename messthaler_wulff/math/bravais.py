@@ -22,11 +22,15 @@ class Bravais:
         if transform is None:
             self.transform = np.identity(self.dimension)
         else:
+            assert transform.shape == (self.dimension, self.dimension)
             self.transform = transform
 
     @staticmethod
     def check_primitives(primitives: list[vec]):
-        ps = set(primitives)
+        try:
+            ps = set(primitives)
+        except TypeError:
+            raise ValueError(f"Could transform primitives into set: {primitives}")
         for p in primitives:
             if -p in ps:
                 raise ValueError("Primitives contain inverses of some vector(s)")
@@ -75,6 +79,9 @@ class Bravais:
 
         return g
 
+    def __str__(self):
+        return str(self._primitives)
+
 
 def plot_bravais(bravais: Bravais,
                  graph: nx.Graph,
@@ -87,6 +94,7 @@ def plot_bravais(bravais: Bravais,
 
     if ax is None:
         ax = plt.figure().add_subplot(projection='3d' if bravais.dimension == 3 else None)
+        ax.set_aspect('equal')
 
     pos = lambda n: bravais.transform @ n
 

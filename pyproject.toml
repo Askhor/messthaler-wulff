@@ -24,7 +24,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
-dependencies = ["matplotlib", "open3d", "psutil", "scipy",
+dependencies = ["matplotlib", "open3d", "psutil", "scipy", "colorama", "pydantic",
     "prettytable", "argcomplete", "mydefaults==2.*", "networkx"]
 keywords = ["Wulff", "Wulff Crystals"]
 
